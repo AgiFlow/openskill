@@ -17,24 +17,11 @@ Model Context Protocol (MCP) server that enables [Anthropic Skills](https://www.
 - **Custom Images**: Support for custom Docker images tailored to your needs
 - **Pre-configured Environment**: Python (uv, pip, poetry, pipenv, Pillow) and Node.js tooling out of the box
 
-## Requirements
-
-- Node.js 20+
-- Docker (for use-skill sandbox execution)
-- pnpm (for development)
-
-## Installation
-
-```bash
-pnpm install
-pnpm build
-```
-
 ## MCP Tools
 
 ### get-skill
 
-Retrieves skill information from the skills directory.
+Retrieves skill information from the skills directory. You can use anthopic's skills in github and put that in .claude/skills or your custom skill folder and that should work.
 
 **Input:**
 - `command` (string): Name of the skill to retrieve
@@ -115,9 +102,35 @@ node dist/cli.js use-skill canvas-design "python generate.py output.pdf" \
   --mount /Users/username/projects
 ```
 
+### doctor
+
+Check if Docker is installed and accessible. Validates your environment for running OpenSkill.
+
+```bash
+node dist/cli.js doctor
+```
+
+**Checks:**
+- Docker installation and version
+- Docker daemon status
+
+**Example Output:**
+```
+Running OpenSkill environment checks...
+
+Checking Docker installation...
+✓ Docker is installed: Docker version 28.3.2, build 578ccf6
+
+Checking Docker daemon...
+✓ Docker daemon is running
+
+✓ All checks passed!
+  Your environment is ready to use OpenSkill.
+```
+
 ### http-serve
 
-Start the HTTP server (used by Docker containers).
+Start the HTTP server (used by Docker containers). When you create your own dockerfile, simply use `npx @agiflowai/openskill http-serve` as your entry point.
 
 ```bash
 node dist/cli.js http-serve [options]

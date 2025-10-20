@@ -47,8 +47,8 @@ RUN echo "=== Verifying installations ===" && \
 
 WORKDIR /app
 
-# Copy built files (all dependencies are bundled - no package.json needed)
-COPY dist ./dist
+# Install @agiflowai/openskill from npm
+RUN npm install -g @agiflowai/openskill
 
 # Create workspace directory for command execution
 RUN mkdir -p /workspace && chmod 777 /workspace
@@ -61,5 +61,5 @@ ENV NODE_ENV=production \
 # Expose port
 EXPOSE 3000
 
-# Start the HTTP server using the built CLI
-CMD ["node", "dist/cli.js", "http-serve", "--port", "3000", "--host", "0.0.0.0"]
+# Start the HTTP server using the installed CLI
+CMD ["openskill", "http-serve", "--port", "3000", "--host", "0.0.0.0"]
