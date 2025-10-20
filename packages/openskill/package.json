@@ -1,0 +1,57 @@
+{
+  "name": "@agiflowai/openskill",
+  "description": "Model Context Protocol server for OpenSkill rating system integration",
+  "version": "0.1.0",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript"
+  ],
+  "bin": {
+    "openskill": "./dist/cli.cjs"
+  },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.cts",
+  "module": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "node --loader ts-node/esm src/cli.ts mcp-serve",
+    "build": "tsdown",
+    "test": "vitest --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.5",
+    "@modelcontextprotocol/sdk": "1.19.1",
+    "chalk": "5.6.2",
+    "commander": "14.0.1",
+    "gray-matter": "^4.0.3",
+    "hono": "^4.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsdown": "^0.15.6",
+    "typescript": "5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./cli": {
+      "import": "./dist/cli.js",
+      "require": "./dist/cli.cjs"
+    },
+    "./server": {
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./package.json": "./package.json"
+  }
+}

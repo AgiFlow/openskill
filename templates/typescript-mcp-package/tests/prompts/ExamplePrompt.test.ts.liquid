@@ -1,0 +1,45 @@
+/**
+ * {{ promptName }} Tests
+ *
+ * TESTING PATTERNS:
+ * - Test prompt metadata (name, description, arguments)
+ * - Test message generation with various arguments
+ * - Verify message structure and content
+ * - Test optional vs required arguments
+ *
+ * CODING STANDARDS:
+ * - Use descriptive test names (should...)
+ * - Test with and without optional arguments
+ * - Verify message array structure
+ * - Check role and content properties
+ * - Validate argument handling
+ */
+
+import { describe, it, expect } from 'vitest';
+import { {{ promptName | replace: "Prompt", "" | camelCase }}Prompt, generate{{ promptName }} } from '../../src/prompts/{{ promptName }}';
+
+describe('{{ promptName }}', () => {
+  it('should have correct metadata', () => {
+    expect({{ promptName | replace: "Prompt", "" | camelCase }}Prompt.name).toBeDefined();
+    expect({{ promptName | replace: "Prompt", "" | camelCase }}Prompt.description).toBe('{{ promptDescription }}');{% if withArguments %}
+    expect({{ promptName | replace: "Prompt", "" | camelCase }}Prompt.arguments).toBeDefined();{% endif %}
+  });
+
+  it('should generate messages successfully', () => {
+    const messages = generate{{ promptName }}({% if withArguments %}{ context: 'test' }{% endif %});
+
+    expect(messages).toBeDefined();
+    expect(messages.length).toBeGreaterThan(0);
+    expect(messages[0].role).toBe('user');
+    expect(messages[0].content.type).toBe('text');
+  });
+{% if withArguments %}
+  it('should handle optional arguments', () => {
+    const messagesWithArgs = generate{{ promptName }}({ context: 'test context' });
+    const messagesWithoutArgs = generate{{ promptName }}();
+
+    expect(messagesWithArgs).toBeDefined();
+    expect(messagesWithoutArgs).toBeDefined();
+  });
+{% endif %}
+});

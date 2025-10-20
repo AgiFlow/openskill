@@ -1,0 +1,41 @@
+/**
+ * {{ serviceName | pascalCase }}Service Tests
+ *
+ * TESTING PATTERNS:
+ * - Unit tests for each public method
+ * - Test success cases, error cases, and edge cases
+ * - Mock external dependencies
+ * - Use descriptive test names that explain what is being tested
+ *
+ * CODING STANDARDS:
+ * - Use Vitest testing framework
+ * - Group related tests with describe blocks
+ * - Use beforeEach for test setup
+ * - Clear test names: 'should [expected behavior] when [condition]'
+ * - Test both happy paths and error scenarios
+ *
+ * AVOID:
+ * - Testing implementation details (test behavior, not internals)
+ * - Shared state between tests (use beforeEach for clean setup)
+ * - Overly complex test setup (keep tests simple and focused)
+ */
+
+import { beforeEach, describe, expect, it } from 'vitest';
+import { {{ serviceName | pascalCase }}Service } from '../../src/services/{{ serviceName | pascalCase }}Service';
+
+describe('{{ serviceName | pascalCase }}Service', () => {
+  let service: {{ serviceName | pascalCase }}Service;
+
+  beforeEach(() => {
+    service = new {{ serviceName | pascalCase }}Service();
+  });
+
+  describe('process', () => {
+    it('should process input successfully', async () => {
+      const result = await service.process('test');
+      expect(result).toBe('test');
+    });
+
+    // TODO: Add more test cases
+  });
+});

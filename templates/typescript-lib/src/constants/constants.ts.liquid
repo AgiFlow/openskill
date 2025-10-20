@@ -1,0 +1,46 @@
+/**
+ * {{ constantsName | pascalCase }} Constants
+ *
+ * DESIGN PATTERNS:
+ * - Strongly-typed constant exports for compile-time safety
+ * - Organized by logical grouping using const objects
+ * - Immutable by default (as const assertions)
+ * - Clear documentation with JSDoc comments
+ * - Re-exported through barrel export for clean imports
+ *
+ * CODING STANDARDS:
+ * - Primitive constants: UPPER_SNAKE_CASE
+ * - Object constants: PascalCase with 'as const'
+ * - Always include JSDoc with purpose and usage
+ * - Export individual constants or grouped objects
+ * - Use type inference over explicit types when possible
+ * - Keep related constants grouped together
+ *
+ * AVOID:
+ * - Mutable exports (let, var)
+ * - Magic numbers without explanation
+ * - Mixing unrelated constants
+ * - Missing documentation
+ * - Exporting raw values without context
+ */
+
+/**
+ * Example constant value
+ * @example
+ * ```ts
+ * console.log(DEFAULT_VALUE);
+ * ```
+ */
+export const DEFAULT_VALUE = 'default';
+
+{% if withTypes %}/**
+ * Type-safe constant configuration
+ */
+export const {{ constantsName | pascalCase }}Config = {
+  /** Example property */
+  exampleProp: 'value',
+} as const;
+
+/** Inferred type from the config object */
+export type {{ constantsName | pascalCase }}ConfigType = typeof {{ constantsName | pascalCase }}Config;
+{% endif %}

@@ -1,0 +1,42 @@
+/**
+ * {{ promptName }}
+ * 
+ * DESIGN PATTERNS:
+ * - Prompt pattern with name, description, and optional arguments
+ * - Message generation for AI assistant guidance
+ * 
+ * CODING STANDARDS:
+ * - Use snake_case for prompt name property
+ * - Define arguments schema for customization
+ * - Return messages array with role and content
+ * - Keep prompts focused and well-structured
+ * 
+ * AVOID:
+ * - Overly complex argument structures
+ * - Missing argument validation
+ * - Unclear or ambiguous instructions
+ */
+
+export const {{ promptName | replace: "Prompt", "" | camelCase }}Prompt = {
+  name: '{{ promptName | replace: "Prompt", "" | snakeCase }}',
+  description: '{{ promptDescription }}',{% if withArguments %}
+  arguments: [
+    {
+      name: 'context',
+      description: 'Context or input for the prompt',
+      required: false,
+    },
+  ],{% endif %}
+};
+
+export function generate{{ promptName }}({% if withArguments %}args?: { context?: string }{% endif %}): Array<{ role: string; content: { type: string; text: string } }> {
+  return [
+    {
+      role: 'user',
+      content: {
+        type: 'text',
+        text: `{{ promptDescription }}{% if withArguments %}\n\nContext: ${args?.context || 'No context provided'}{% endif %}`,
+      },
+    },
+  ];
+}

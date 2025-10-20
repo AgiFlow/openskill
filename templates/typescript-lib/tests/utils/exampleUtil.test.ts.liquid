@@ -1,0 +1,59 @@
+/**
+ * {{ utilName }} Utilities Tests
+ *
+ * TESTING PATTERNS:
+ * - Unit tests for each exported function
+ * - Test pure function behavior (same input = same output)
+ * - Test edge cases, boundary conditions, and invalid inputs
+ * - No mocking needed for pure functions
+ *
+ * CODING STANDARDS:
+ * - Use Vitest testing framework
+ * - Group related tests with describe blocks
+ * - Clear test names: 'should [expected behavior] when [condition]'
+ * - Test both happy paths and error scenarios
+ * - Use data-driven tests for multiple input scenarios
+ *
+ * AVOID:
+ * - Testing implementation details (test behavior, not internals)
+ * - Mocking (pure functions don't need mocks)
+ * - Shared state between tests
+ */
+
+import { describe, expect, it } from 'vitest';
+import { anotherExample, exampleFunction } from '../../src/utils/{{ utilName }}';
+
+describe('{{ utilName }}', () => {
+  describe('exampleFunction', () => {
+    it('should return input unchanged', () => {
+      const result = exampleFunction('test');
+      expect(result).toBe('test');
+    });
+
+    it('should handle empty string', () => {
+      const result = exampleFunction('');
+      expect(result).toBe('');
+    });
+
+    // TODO: Add more test cases
+  });
+
+  describe('anotherExample', () => {
+    it('should return value unchanged', () => {
+      const result = anotherExample(42);
+      expect(result).toBe(42);
+    });
+
+    it('should handle zero', () => {
+      const result = anotherExample(0);
+      expect(result).toBe(0);
+    });
+
+    it('should handle negative numbers', () => {
+      const result = anotherExample(-10);
+      expect(result).toBe(-10);
+    });
+
+    // TODO: Add more test cases
+  });
+});

@@ -1,0 +1,45 @@
+/**
+ * {{ commandName | pascalCase }} Command
+ *
+ * DESIGN PATTERNS:
+ * - Command pattern with Commander for CLI argument parsing
+ * - Async/await pattern for asynchronous operations
+ * - Error handling pattern with try-catch and proper exit codes
+ *
+ * CODING STANDARDS:
+ * - Use async action handlers for asynchronous operations
+ * - Provide clear option descriptions and default values
+ * - Handle errors gracefully with process.exit()
+ * - Log progress and errors to console
+ * - Use Commander's .option() and .argument() for inputs
+ *
+ * AVOID:
+ * - Synchronous blocking operations in action handlers
+ * - Missing error handling (always use try-catch)
+ * - Hardcoded values (use options or environment variables)
+ * - Not exiting with appropriate exit codes on errors
+ */
+
+import { Command } from 'commander';
+
+/**
+ * {{ commandDescription }}
+ */
+export const {{ commandName | camelCase }}Command = new Command('{{ commandName }}')
+  .description('{{ commandDescription }}'){% if withOptions %}
+  .option('-v, --verbose', 'Enable verbose output', false)
+  .option('-o, --output <path>', 'Output file path'){% endif %}
+  .action(async (options) => {
+    try {{% if withOptions %}
+      if (options.verbose) {
+        console.log('Running {{ commandName }} with options:', options);
+      }
+{% endif %}
+      // TODO: Implement command logic here
+      console.log('{{ commandName | pascalCase }} command executed successfully');
+      
+    } catch (error) {
+      console.error('Error executing {{ commandName }}:', error);
+      process.exit(1);
+    }
+  });

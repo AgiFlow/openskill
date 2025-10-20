@@ -1,0 +1,321 @@
+version: '1.0'
+template: shared
+description: Shared rules and patterns for all Agiflow templates
+rules:
+  - pattern: export-standards
+    description: Strict export standards enforced across all TypeScript/JavaScript files
+    must_do:
+      - rule: Use direct exports only - export declarations at point of definition
+        codeExample: |
+          // ✅ GOOD - Direct exports
+          export class UserService {
+            getUser() { /* implementation */ }
+          }
+
+          export function calculateTotal(items: Item[]): number {
+            return items.reduce((sum, item) => sum + item.price, 0);
+          }
+
+          export const API_ENDPOINTS = {
+            users: '/api/users',
+            orders: '/api/orders'
+          } as const;
+
+          export type User = {
+            id: string;
+            email: string;
+          };
+      - rule: Use barrel exports from collocated files via index.ts
+        codeExample: |
+          // ✅ GOOD - Barrel exports in index.ts
+          export { UserService } from './userService';
+          export { OrderService } from './orderService';
+          export { PaymentService } from './paymentService';
+          export type { User, Order, Payment } from './types';
+    must_not_do:
+      - rule: Never use default exports
+        codeExample: |
+          // ❌ BAD - Default exports
+          export default class UserService {}
+          export default function calculateTotal() {}
+          export default { users: '/api/users' };
+      - rule: Never use named exports (export statements)
+        codeExample: |
+          // ❌ BAD - Named exports
+          class UserService {}
+          function calculateTotal() {}
+          const API_ENDPOINTS = {};
+
+          export { UserService, calculateTotal, API_ENDPOINTS };
+      - rule: Never use namespace exports
+        codeExample: |
+          // ❌ BAD - Namespace exports
+          export * as UserUtils from './userUtils';
+          export * from './services';
+  - pattern: error-handling
+    description: Consistent error handling patterns across all code
+    must_do:
+      - rule: Always use try-catch blocks for async operations
+        codeExample: |
+          // ✅ GOOD
+          async function fetchUser(id: string) {
+            try {
+              const response = await fetch(`/api/users/${id}`);
+              return await response.json();
+            } catch (error) {
+              throw new Error(`Failed to fetch user: ${error.message}`);
+            }
+          }
+      - rule: Throw descriptive error messages with context
+        codeExample: |
+          // ✅ GOOD
+          if (!userId) {
+            throw new Error('User ID is required for fetching user data');
+          }
+      - rule: Handle errors at appropriate abstraction levels
+        codeExample: |
+          // ✅ GOOD - Handle in service, propagate meaningful errors
+          async function createOrder(data: OrderData) {
+            try {
+              return await orderService.create(data);
+            } catch (error) {
+              if (error instanceof ValidationError) {
+                throw new BadRequestError('Invalid order data', error.details);
+              }
+              throw new ServerError('Failed to create order', error);
+            }
+          }
+    must_not_do:
+      - rule: Never use empty catch blocks
+        codeExample: |
+          // ❌ BAD
+          try {
+            await dangerousOperation();
+          } catch (e) {
+            // Silent failure!
+          }
+      - rule: Never catch errors without proper handling or re-throwing
+        codeExample: |
+          // ❌ BAD
+          try {
+            await operation();
+          } catch (error) {
+            console.log('Something went wrong'); // Only logging, not handling
+          }
+      - rule: Never expose sensitive error details to clients
+        codeExample: |
+          // ❌ BAD
+          catch (error) {
+            return { error: error.stack }; // Exposing stack trace
+          }
+  - pattern: naming-conventions
+    description: Consistent naming conventions across all code
+    must_do:
+      - rule: Use PascalCase for classes, interfaces, types, and enums
+        codeExample: |
+          // ✅ GOOD
+          class UserService {}
+          interface UserData {}
+          type OrderStatus = 'pending' | 'completed';
+          enum PaymentMethod { CREDIT_CARD, PAYPAL }
+      - rule: Use camelCase for variables, functions, and methods
+        codeExample: |
+          // ✅ GOOD
+          const userName = 'John';
+          function getUserById(id: string) {}
+          const handleSubmit = () => {};
+      - rule: Use UPPER_SNAKE_CASE for constants
+        codeExample: |
+          // ✅ GOOD
+          const MAX_RETRY_ATTEMPTS = 3;
+          const API_BASE_URL = 'https://api.example.com';
+      - rule: Use kebab-case for file names
+        codeExample: |
+          // ✅ GOOD
+          user-service.ts
+          payment-processor.ts
+          order-validation.ts
+    must_not_do:
+      - rule: Never mix naming conventions
+        codeExample: |
+          // ❌ BAD
+          class user_service {}  // Wrong: should be PascalCase
+          const UserName = 'John';  // Wrong: should be camelCase
+          function GetUserById() {}  // Wrong: should be camelCase
+      - rule: Never use abbreviations unless widely recognized
+        codeExample: |
+          // ❌ BAD
+          const usrNm = 'John';
+          function getUsrByID() {}
+
+          // ✅ GOOD
+          const userName = 'John';
+          function getUserById() {}
+  - pattern: type-safety
+    description: Strong type safety standards for TypeScript code
+    must_do:
+      - rule: Always provide explicit return types for functions
+        codeExample: |
+          // ✅ GOOD
+          function calculateTotal(items: Item[]): number {
+            return items.reduce((sum, item) => sum + item.price, 0);
+          }
+
+          async function fetchUser(id: string): Promise<User> {
+            const response = await fetch(`/api/users/${id}`);
+            return response.json();
+          }
+      - rule: Define interfaces for object shapes
+        codeExample: |
+          // ✅ GOOD
+          interface User {
+            id: string;
+            email: string;
+            name: string;
+          }
+
+          function createUser(data: User): User {
+            return { ...data };
+          }
+      - rule: Use type guards for runtime type checking
+        codeExample: |
+          // ✅ GOOD
+          function isUser(value: unknown): value is User {
+            return (
+              typeof value === 'object' &&
+              value !== null &&
+              'id' in value &&
+              'email' in value
+            );
+          }
+    must_not_do:
+      - rule: Never use 'any' type unless absolutely necessary
+        codeExample: |
+          // ❌ BAD
+          function processData(data: any) {
+            return data.someProperty;
+          }
+
+          // ✅ GOOD
+          function processData(data: UserData) {
+            return data.email;
+          }
+      - rule: Never use type assertions to bypass type checking
+        codeExample: |
+          // ❌ BAD
+          const user = response as User; // Unsafe
+
+          // ✅ GOOD
+          if (isUser(response)) {
+            const user = response; // Type-safe
+          }
+      - rule: Never ignore TypeScript errors with @ts-ignore
+        codeExample: |
+          // ❌ BAD
+          // @ts-ignore
+          const value = dangerousOperation();
+  - pattern: documentation-standards
+    description: Code documentation standards
+    must_do:
+      - rule: Add JSDoc comments for all public APIs
+        codeExample: |
+          // ✅ GOOD
+          /**
+           * Calculates the total price of items in the cart
+           * @param items - Array of items to calculate total for
+           * @returns The total price as a number
+           */
+          export function calculateTotal(items: Item[]): number {
+            return items.reduce((sum, item) => sum + item.price, 0);
+          }
+      - rule: Document complex logic with inline comments
+        codeExample: |
+          // ✅ GOOD
+          // Apply discount based on user tier (10% for premium, 5% for standard)
+          const discount = user.tier === 'premium' ? 0.1 : 0.05;
+          const finalPrice = basePrice * (1 - discount);
+      - rule: Keep README.md updated with setup and usage instructions
+    should_do:
+      - rule: Add examples in JSDoc for complex functions
+      - rule: Document edge cases and assumptions
+      - rule: Keep comments up-to-date with code changes
+    must_not_do:
+      - rule: Never leave commented-out code
+        codeExample: |
+          // ❌ BAD
+          function processOrder() {
+            // const oldImplementation = doSomething();
+            // return oldImplementation;
+            return newImplementation();
+          }
+      - rule: Never use obvious comments that don't add value
+        codeExample: |
+          // ❌ BAD
+          // Increment counter by 1
+          counter++;
+
+          // ✅ GOOD (no comment needed for obvious code)
+          counter++;
+  - pattern: async-await-patterns
+    description: Best practices for asynchronous code
+    must_do:
+      - rule: Always use async/await over raw promises
+        codeExample: |
+          // ✅ GOOD
+          async function fetchUserData(id: string): Promise<User> {
+            const response = await fetch(`/api/users/${id}`);
+            return response.json();
+          }
+      - rule: Handle promise rejections with try-catch
+        codeExample: |
+          // ✅ GOOD
+          async function saveUser(user: User): Promise<void> {
+            try {
+              await database.save(user);
+            } catch (error) {
+              throw new Error(`Failed to save user: ${error.message}`);
+            }
+          }
+      - rule: Use Promise.all for parallel operations
+        codeExample: |
+          // ✅ GOOD
+          async function fetchMultipleUsers(ids: string[]): Promise<User[]> {
+            const promises = ids.map(id => fetchUser(id));
+            return Promise.all(promises);
+          }
+    must_not_do:
+      - rule: Never mix async/await with .then/.catch chains
+        codeExample: |
+          // ❌ BAD
+          async function badExample() {
+            await operation()
+              .then(result => process(result))
+              .catch(error => handle(error));
+          }
+
+          // ✅ GOOD
+          async function goodExample() {
+            try {
+              const result = await operation();
+              return process(result);
+            } catch (error) {
+              handle(error);
+            }
+          }
+      - rule: Never forget to await async functions
+        codeExample: |
+          // ❌ BAD
+          async function badExample() {
+            saveUser(user); // Missing await!
+            return;
+          }
+
+          // ✅ GOOD
+          async function goodExample() {
+            await saveUser(user);
+            return;
+          }
+  - pattern: test-pattern
+    description: Test pattern description
+  - pattern: duplicate-pattern
+    description: Test pattern description

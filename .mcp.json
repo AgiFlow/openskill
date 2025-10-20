@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "openskill-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["packages/openskill/dist/cli.cjs", "mcp-serve"],
+      "disabled": false
+    }
+  }
+}

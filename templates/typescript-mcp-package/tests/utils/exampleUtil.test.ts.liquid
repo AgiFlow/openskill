@@ -1,0 +1,28 @@
+/**
+ * {{ utilName }} Utility Tests
+ *
+ * TESTING PATTERNS:
+ * - Test pure functions with various inputs
+ * - Cover edge cases and invalid inputs
+ * - Verify return values and types
+ * - No mocking needed for pure functions
+ *
+ * CODING STANDARDS:
+ * - Use descriptive test names (should...)
+ * - Group related tests with nested describe blocks
+ * - Test one function per describe block
+ * - Include positive and negative test cases
+ */
+
+import { describe, it, expect } from 'vitest';
+import { processValue } from '../../src/utils/{{ utilName }}';
+
+describe('{{ utilName }}', () => {
+  describe('processValue', () => {
+    it('should process value successfully', () => {
+      const result = processValue('test');
+
+      expect(result).toBeDefined();
+    });
+  });
+});

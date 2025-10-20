@@ -1,0 +1,41 @@
+/**
+ * {{ toolName }} Tests
+ *
+ * TESTING PATTERNS:
+ * - Test tool metadata (name, description, schema)
+ * - Test successful execution with valid inputs
+ * - Test error handling with invalid inputs
+ * - Mock services when testing tools
+ *
+ * CODING STANDARDS:
+ * - Use descriptive test names (should...)
+ * - Test input validation
+ * - Verify ToolResult structure
+ * - Check both success and error paths
+ * - Mock external dependencies and services
+ */
+
+import { describe, it, expect } from 'vitest';
+import { {{ toolName }} } from '../../src/tools/{{ toolName }}';
+
+describe('{{ toolName }}', () => {
+  const tool = new {{ toolName }}();
+
+  it('should have correct metadata', () => {
+    expect(tool.name).toBeDefined();
+    expect(tool.description).toBe('{{ toolDescription }}');
+    expect(tool.inputSchema).toBeDefined();
+  });
+
+  it('should execute successfully', async () => {
+    const result = await tool.execute({ input: 'test' });
+
+    expect(result.content).toBeDefined();
+    expect(result.content[0].type).toBe('text');
+    expect(result.isError).toBeFalsy();
+  });
+
+  it('should handle errors gracefully', async () => {
+    // TODO: Add error test cases
+  });
+});

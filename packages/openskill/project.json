@@ -1,0 +1,7 @@
+{
+  "name": "openskill",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/openskill",
+  "projectType": "application",
+  "sourceTemplate": "typescript-mcp-package"
+}

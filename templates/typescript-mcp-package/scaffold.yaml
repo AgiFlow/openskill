@@ -1,0 +1,295 @@
+boilerplate:
+  - name: scaffold-mcp-package
+    targetFolder: packages
+    description: |-
+      A TypeScript-based Model Context Protocol (MCP) server package template with complete tooling setup, including Vitest for testing, tsdown for bundling, and comprehensive TypeScript configuration. Built on @modelcontextprotocol/sdk for MCP server implementation with support for tools, resources, and prompts.
+
+      Perfect for building MCP servers that extend Claude Code and other MCP clients with custom tools, integrations, and workflows. Includes both stdio and SSE transport options for flexible deployment.
+
+      Features modular architecture with services, tools, and transport layers, comprehensive type safety with TypeScript strict mode, test setup with Vitest, and development workflow with hot reload support. Follows best practices for MCP server development with clear separation of concerns.
+    variables_schema:
+      type: object
+      properties:
+        packageName:
+          type: string
+          description: Name of the MCP package (kebab-case, e.g., 'my-mcp-server')
+        binName:
+          type: string
+          description: Name of the CLI binary command (kebab-case, e.g., 'my-cli'). If not provided, defaults to packageName.
+        description:
+          type: string
+          description: Short description of the MCP server
+        withHttpTransport:
+          type: boolean
+          description: Include HTTP/SSE transport support
+          default: false
+      required:
+        - packageName
+        - description
+      additionalProperties: false
+    includes:
+      - package.json
+      - tsconfig.json
+      - tsdown.config.ts
+      - .gitignore
+      - README.md
+      - src/index.ts
+      - src/cli.ts
+      - src/commands/mcp-serve.ts
+      - src/server/index.ts
+      - src/types/index.ts
+      - src/transports/stdio.ts
+      - src/transports/sse.ts?withHttpTransport=true
+      - src/transports/http.ts?withHttpTransport=true
+      - vitest.config.ts
+    instruction: |-
+      TypeScript MCP server package template with minimal setup. Use feature scaffolds to add tools and services.
+
+      File purposes:
+      - package.json: NPM package configuration with MCP SDK, TypeScript, Vitest, and build tools
+      - tsconfig.json: TypeScript configuration with strict mode and ESNext module support
+      - tsdown.config.ts: Build configuration for tsdown bundler (builds both index.ts and cli.ts)
+      - src/index.ts: Public API barrel exports for library usage (import from other packages)
+      - src/cli.ts: Main CLI entry point that sets up Commander and registers all commands
+      - src/commands/mcp-serve.ts: MCP server command with transport selection (stdio, http, sse)
+      - src/server/index.ts: MCP server setup with tool, resource, and prompt registration
+      - src/types/index.ts: Shared TypeScript types and interfaces
+      - src/tools/: Directory for tool implementations (use scaffold-mcp-tool to add tools)
+      - src/services/: Directory for business logic services (use scaffold-mcp-service to add services)
+      - src/transports/stdio.ts: Standard I/O transport for CLI usage
+      - src/transports/sse.ts: (if withHttpTransport) Server-Sent Events transport for HTTP
+      - src/transports/http.ts: (if withHttpTransport) HTTP transport configuration
+      - tests/: Directory for Vitest test files
+      - vitest.config.ts: Vitest configuration for unit and integration testing
+
+      How to use the scaffolded code:
+      1. Install dependencies: pnpm install
+      2. Add new tools: Use scaffold-mcp-tool feature (scaffold-mcp scaffold <project> scaffold-mcp-tool)
+      3. Add new services: Use scaffold-mcp-service feature (scaffold-mcp scaffold <project> scaffold-mcp-service)
+      4. Register tools: Import and add to server in src/server/index.ts
+      5. Define types: Add shared types in src/types/index.ts
+      6. Run dev mode: pnpm dev mcp-serve (uses stdio transport by default)
+      7. Run with HTTP: pnpm dev mcp-serve --type http --port 3000
+      8. Run with SSE: pnpm dev mcp-serve --type sse --port 3000
+      9. Run tests: pnpm test
+      10. Build package: pnpm build
+      11. Test in Claude Code: Configure in Claude Code settings to use the built package
+      12. Publish: Update package.json version and run pnpm publish
+
+      Design patterns to follow:
+      - Tool Pattern: Each tool is a class with static TOOL_NAME constant, getDefinition() method, and execute() method returning CallToolResult
+      - Service Layer: Business logic separated from tool implementations for reusability
+      - Transport Abstraction: Support multiple transport types (stdio, SSE, HTTP) via transport modules
+      - Schema Validation: Use JSON Schema for input validation in tools (defined in getDefinition())
+      - Error Handling: Consistent error responses with proper error types and messages
+      - Type Safety: Full TypeScript coverage with strict mode enabled, using CallToolResult from MCP SDK
+      - Modular Architecture: Clear separation between tools, services, types, and transports
+      - Testing: Unit tests for tools and services, integration tests for server behavior
+features:
+  - name: scaffold-mcp-service
+    description: Generate a service class for encapsulating business logic and data operations in MCP servers. Creates a TypeScript class with methods for core operations, proper error handling, and type definitions. Perfect for separating business logic from tool implementations, making code more maintainable and testable.
+    variables_schema:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: Name of the service in PascalCase (e.g., 'FileService', 'DataProcessingService')
+        withTest:
+          type: boolean
+          description: Generate a Vitest test file
+          default: true
+      required:
+        - serviceName
+      additionalProperties: false
+    includes:
+      - src/services/ExampleService.ts->src/services/{{ serviceName }}.ts
+      - src/services/index.ts
+      - tests/services/ExampleService.test.ts->tests/services/{{ serviceName }}.test.ts?withTest=true
+    instruction: |-
+      Services follow a class-based pattern for encapsulating business logic and operations. Each service is a TypeScript class that can be used by tools or other services.
+
+      Pattern explanation: Services are pure TypeScript classes that handle business logic, data processing, or external API calls. They keep tools thin and focused on input/output, while services handle the actual work. Services can call other services for complex operations.
+
+      File organization: Services live in src/services/{ServiceName}.ts. Test files mirror the source structure in tests/services/{ServiceName}.test.ts.
+
+      Naming conventions: Service classes use PascalCase with 'Service' suffix (e.g., FileService, DataProcessingService). Method names use camelCase and descriptive verbs (process, fetch, validate, transform).
+
+      Usage guidelines: Import services in tools or other services. Instantiate as needed or use singleton pattern. Keep methods focused on single responsibility. Handle errors with try-catch and throw descriptive errors. Return consistent types (T, Promise<T>, or Result<T>).
+
+      Testing approach: Write unit tests with mocked dependencies. Test each method independently. Use Vitest for testing framework. Mock external dependencies and focus on business logic testing.
+    patterns:
+      - src/services/**/*.ts
+  - name: scaffold-mcp-util
+    description: Generate a utility function or helper module for common operations in MCP servers. Creates a TypeScript file with pure functions, proper type definitions, and comprehensive tests. Perfect for creating reusable utilities like formatters, validators, parsers, or data transformers that can be used across tools and services.
+    variables_schema:
+      type: object
+      properties:
+        utilName:
+          type: string
+          description: Name of the utility file in camelCase (e.g., 'stringHelpers', 'validators', 'formatters')
+        withTest:
+          type: boolean
+          description: Generate a Vitest test file
+          default: true
+      required:
+        - utilName
+      additionalProperties: false
+    includes:
+      - src/utils/exampleUtil.ts->src/utils/{{ utilName }}.ts
+      - src/utils/index.ts
+      - tests/utils/exampleUtil.test.ts->tests/utils/{{ utilName }}.test.ts?withTest=true
+    instruction: |-
+      Utility functions follow a pure function pattern with no side effects. Each utility file contains related helper functions that can be used across the application.
+
+      Pattern explanation: Utilities are pure TypeScript functions exported from a module. They should be stateless, side-effect free, and focused on a single domain (string manipulation, validation, formatting, etc.). Utilities can be used by tools, services, or other utilities.
+
+      File organization: Utilities live in src/utils/{utilName}.ts. Test files mirror the source structure in tests/utils/{utilName}.test.ts. Export utilities from src/utils/index.ts for barrel imports.
+
+      Naming conventions: Utility files use camelCase (e.g., stringHelpers.ts, validators.ts). Function names use camelCase and descriptive verbs (validate, format, parse, transform). Use descriptive names that indicate purpose.
+
+      Usage guidelines: Import utilities from @/utils or @/utils/{utilName}. Keep functions pure - no side effects or external dependencies. Export individual functions, not classes. Use TypeScript for type safety. Document complex logic with JSDoc comments.
+
+      Testing approach: Write unit tests for each exported function. Test edge cases, invalid inputs, and expected outputs. Use Vitest for testing framework. Mock external dependencies if needed.
+    patterns:
+      - src/utils/**/*.ts
+  - name: scaffold-mcp-tool
+    description: Generate a new MCP tool with TypeScript, following the tool pattern with name, description, inputSchema, and execute method. Creates a tool class with proper type definitions, JSON Schema validation, error handling, and optional service integration. Perfect for adding new capabilities to your MCP server with full type safety and test coverage.
+    variables_schema:
+      type: object
+      properties:
+        toolName:
+          type: string
+          description: Name of the tool in PascalCase (e.g., 'FileReadTool', 'DataProcessorTool')
+        toolDescription:
+          type: string
+          description: Description of what the tool does
+        serviceName:
+          type: string
+          description: Optional service name in PascalCase (e.g., 'MultiplyToolService'). If provided, generates a corresponding service for business logic.
+        withTest:
+          type: boolean
+          description: Generate a Vitest test file
+          default: true
+      required:
+        - toolName
+        - toolDescription
+      additionalProperties: false
+    includes:
+      - src/tools/ExampleTool.ts->src/tools/{{ toolName }}.ts
+      - src/tools/index.ts
+      - src/services/ExampleService.ts->src/services/{{ serviceName }}.ts?serviceName
+      - tests/tools/ExampleTool.test.ts->tests/tools/{{ toolName }}.test.ts?withTest=true
+    instruction: |-
+      MCP tools follow a class-based pattern with static TOOL_NAME, getDefinition() method, and execute() method. Each tool implements the Tool interface for type safety.
+
+      Pattern explanation: Tools are TypeScript classes that implement the Tool interface. They have a static TOOL_NAME constant, a getDefinition() method that returns ToolDefinition with name/description/inputSchema, and an execute() method that returns CallToolResult. Tools should delegate business logic to services for better testability and reusability.
+
+      File organization: Tools live in src/tools/{ToolName}.ts. Optional services go in src/services/{ToolName}Service.ts. Tests go in tests/tools/{ToolName}.test.ts. Export tools from src/tools/index.ts for barrel imports.
+
+      Naming conventions: Tool classes use PascalCase with 'Tool' suffix (e.g., FileReadTool). Tool names (in TOOL_NAME constant) use snake_case (e.g., 'file_read'). Service classes use PascalCase with 'Service' suffix.
+
+      Usage guidelines: Import Tool, ToolDefinition from ../types and CallToolResult from @modelcontextprotocol/sdk/types.js. Define inputSchema in getDefinition() using JSON Schema. Implement execute method to handle tool logic. Return CallToolResult with content array. Handle errors gracefully with isError flag.
+
+      IMPORTANT - Service Reuse:
+      1. BEFORE creating a new tool, check src/services/ for existing services that may already provide the logic you need
+      2. If a service exists with the required functionality, import and use it in your tool (set withService=false)
+      3. Only create a new service (withService=true) if the logic doesn't exist in any current service
+      4. Avoid duplicating business logic across services - reuse and compose existing services when possible
+
+      Registration steps:
+      1. Import your tool: import { MyTool } from '../tools/MyTool';
+      2. Instantiate: const myTool = new MyTool();
+      3. In ListToolsRequestSchema handler: Add myTool.getDefinition() to tools array
+      4. In CallToolRequestSchema handler: if (name === MyTool.TOOL_NAME) return await myTool.execute(args as any);
+
+      Testing approach: Write unit tests with mocked services. Test input validation, success cases, and error handling. Use Vitest for testing framework.
+    patterns:
+      - src/tools/**/*.ts
+  - name: scaffold-mcp-prompt
+    description: Generate a new MCP prompt with TypeScript, following the prompt pattern with name, description, and optional arguments. Creates a prompt handler with proper type definitions, argument validation, and message generation. Perfect for adding interactive prompts that guide users through complex workflows or provide contextual assistance in your MCP server.
+    variables_schema:
+      type: object
+      properties:
+        promptName:
+          type: string
+          description: Name of the prompt in PascalCase (e.g., 'CodeReviewPrompt', 'DebugAssistantPrompt')
+        promptDescription:
+          type: string
+          description: Description of what the prompt does
+        withArguments:
+          type: boolean
+          description: Include prompt arguments for customization
+          default: true
+        withTest:
+          type: boolean
+          description: Generate a Vitest test file
+          default: true
+      required:
+        - promptName
+        - promptDescription
+      additionalProperties: false
+    includes:
+      - src/prompts/ExamplePrompt.ts->src/prompts/{{ promptName }}.ts
+      - src/prompts/index.ts
+      - tests/prompts/ExamplePrompt.test.ts->tests/prompts/{{ promptName }}.test.ts?withTest=true
+    instruction: |-
+      MCP prompts follow a pattern with name, description, and optional arguments. Each prompt returns structured messages to guide the AI assistant.
+
+      Pattern explanation: Prompts are TypeScript objects or classes that define reusable conversation starters or workflows. They include a name, description, optional arguments for customization, and return an array of prompt messages. Prompts help create consistent, contextual interactions.
+
+      File organization: Prompts live in src/prompts/{PromptName}.ts. Test files mirror the source structure in tests/prompts/{PromptName}.test.ts. Export prompts from src/prompts/index.ts for barrel imports.
+
+      Naming conventions: Prompt files use PascalCase with 'Prompt' suffix (e.g., CodeReviewPrompt). Prompt names (in the object) use snake_case (e.g., 'code_review'). Argument names use camelCase.
+
+      Usage guidelines: Define prompt metadata (name, description). Add optional arguments array with schema for customization. Return messages array with role and content. IMPORTANT: Register prompt in src/server/index.ts by importing and adding to prompts/list and prompts/get handlers.
+
+      Registration steps:
+      1. Import your prompt: import { myPrompt } from '../prompts/MyPrompt';
+      2. Add to prompts/list handler to return prompt metadata
+      3. Add to prompts/get handler to return prompt messages based on arguments
+
+      Testing approach: Write unit tests for prompt generation with various argument combinations. Verify message structure, content, and metadata. Ensure arguments are properly validated. Use Vitest for testing framework.
+    patterns:
+      - src/prompts/**/*.ts
+  - name: scaffold-command
+    description: Generate a new CLI command for MCP packages using Commander.js pattern. Creates a command file with options, argument parsing, and action handler with proper error handling. Perfect for adding new CLI commands to extend MCP server functionality with custom operations and workflows.
+    variables_schema:
+      type: object
+      properties:
+        commandName:
+          type: string
+          description: Name of the CLI command in kebab-case (e.g., 'health-check', 'status')
+        commandDescription:
+          type: string
+          description: Description of what the command does
+        withOptions:
+          type: boolean
+          description: Include example CLI options
+          default: true
+        withTest:
+          type: boolean
+          description: Generate a Vitest test file
+          default: true
+      required:
+        - commandName
+        - commandDescription
+      additionalProperties: false
+    includes:
+      - src/commands/example.ts->src/commands/{{ commandName }}.ts
+      - tests/commands/example.test.ts->tests/commands/{{ commandName }}.test.ts?withTest=true
+    instruction: |-
+      CLI commands follow the Commander.js pattern with a Command instance exported from each command file. Each command is registered in src/cli.ts.
+
+      Pattern explanation: Commands are separate TypeScript modules that export a Commander Command instance. They define the command name, description, options/arguments, and an action handler. Commands are added to the main program in src/cli.ts using program.addCommand().
+
+      File organization: CLI commands live in src/commands/{commandName}.ts. Test files go in tests/commands/{commandName}.test.ts. The main entry point (src/cli.ts) imports and registers all commands.
+
+      Naming conventions: Command files use kebab-case (e.g., health-check.ts). Export variable should be camelCase with 'Command' suffix (e.g., healthCheckCommand). Command names in Commander use kebab-case.
+
+      Usage guidelines: Import Command from 'commander'. Export a new Command instance with name, description, options, and action handler. Use async action handlers for asynchronous operations. Handle errors with try-catch and process.exit() for failures. Register in src/cli.ts by importing and calling program.addCommand().
+
+      Registration steps:
+      1. Import your command: import { myCommand } from './commands/my-command';
+      2. Register: program.addCommand(myCommand);
+
+      Testing approach: Write unit tests that verify command options, argument parsing, and action handler behavior. Mock external dependencies. Test error handling paths. Use Vitest for testing framework.

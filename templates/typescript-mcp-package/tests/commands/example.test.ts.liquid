@@ -1,0 +1,51 @@
+/**
+ * {{ commandName | pascalCase }} Command Tests
+ *
+ * TESTING PATTERNS:
+ * - Test command metadata (name, description)
+ * - Test option parsing and defaults
+ * - Test action handler execution
+ * - Mock external dependencies
+ *
+ * CODING STANDARDS:
+ * - Use descriptive test names (should...)
+ * - Test both success and error paths
+ * - Verify exit codes for error cases
+ * - Mock console output for verification
+ *
+ * AVOID:
+ * - Testing implementation details
+ * - Not mocking external dependencies
+ * - Missing error case tests
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { {{ commandName | camelCase }}Command } from '../../src/commands/{{ commandName }}';
+
+describe('{{ commandName | pascalCase }}Command', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should have correct metadata', () => {
+    expect({{ commandName | camelCase }}Command.name()).toBe('{{ commandName }}');
+    expect({{ commandName | camelCase }}Command.description()).toBe('{{ commandDescription }}');
+  });
+{% if withOptions %}
+  it('should have correct options', () => {
+    const options = {{ commandName | camelCase }}Command.options;
+    expect(options.length).toBeGreaterThan(0);
+  });
+
+  it('should parse options correctly', () => {
+    // TODO: Add option parsing tests
+  });
+{% endif %}
+  it('should execute action handler', async () => {
+    // TODO: Add action handler tests
+  });
+
+  it('should handle errors gracefully', async () => {
+    // TODO: Add error handling tests
+  });
+});

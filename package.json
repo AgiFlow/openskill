@@ -1,0 +1,21 @@
+{
+  "name": "openskill-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "graph": "nx graph",
+    "reset": "nx reset"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.15.1",
+  "devDependencies": {
+    "@nx/workspace": "^21.6.5",
+    "nx": "21.6.5"
+  }
+}

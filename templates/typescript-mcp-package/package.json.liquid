@@ -1,0 +1,41 @@
+{
+  "name": "{{ packageName }}",
+  "description": "{{ description }}",
+  "version": "0.1.0",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "typescript"
+  ],
+  "bin": {
+    "{% if binName %}{{ binName }}{% else %}{{ packageName }}{% endif %}": "./dist/cli.cjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.js",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "node --loader ts-node/esm src/cli.ts mcp-serve",
+    "build": "tsdown",
+    "test": "vitest --run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.19.1",
+    "chalk": "5.6.2",
+    "commander": "14.0.1"{% if withHttpTransport %},
+    "express": "^4.21.2"{% endif %}
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",{% if withHttpTransport %}
+    "@types/express": "^5.0.0",{% endif %}
+    "tsdown": "^0.15.6",
+    "typescript": "5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "type": "module"
+}

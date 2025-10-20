@@ -1,0 +1,38 @@
+/**
+ * {{ serviceName | pascalCase }}Service
+ *
+ * DESIGN PATTERNS:
+ * - Class-based service pattern for encapsulating business logic
+ * - Optional interface implementation for dependency injection and testing
+ * - Single Responsibility: Each service focuses on one domain or capability
+ * - Method-based API: Public methods expose service capabilities
+ *
+ * CODING STANDARDS:
+ * - Service class names use PascalCase with 'Service' suffix (e.g., FileSystemService)
+ * - Method names use camelCase with descriptive verbs (process, fetch, validate, transform)
+ * - Return types should be explicit (never use implicit any)
+ * - Use async/await for asynchronous operations
+ * - Handle errors with try-catch and throw descriptive Error objects
+ * - Document public methods with JSDoc comments
+ *
+ * AVOID:
+ * - Side effects in constructors (keep them lightweight)
+ * - Mixing concerns (keep services focused on single domain)
+ * - Direct coupling to other services (use dependency injection)
+ * - Exposing internal implementation details
+ */
+{% if withInterface %}
+import type { I{{ serviceName | pascalCase }}Service } from '../types';
+
+export class {{ serviceName | pascalCase }}Service implements I{{ serviceName | pascalCase }}Service {
+{% else %}
+export class {{ serviceName | pascalCase }}Service {
+{% endif %}
+  /**
+   * Example method - replace with your business logic
+   */
+  async process(input: string): Promise<string> {
+    // TODO: Implement your service logic here
+    return input;
+  }
+}

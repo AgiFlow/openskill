@@ -1,0 +1,23 @@
+{
+  "name": "openskill-sandbox",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Sandbox environment for executing skills safely",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "sandbox",
+    "mcp",
+    "docker"
+  ],
+  "author": "",
+  "license": "AGPL-3.0",
+  "packageManager": "pnpm@10.15.1",
+  "dependencies": {
+    "hono": "^4.10.1"
+  }
+}

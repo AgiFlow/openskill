@@ -1,0 +1,635 @@
+version: '1.0'
+template: typescript-mcp-package
+description: Rules and patterns for typescript-mcp-package template
+rules:
+  - pattern: src/tools/**/*.ts
+    description: MCP Tool Implementation Standards
+    inherits:
+      - export-standards
+      - error-handling
+      - type-safety
+      - documentation-standards
+    must_do:
+      - rule: Implement Tool interface with getDefinition and execute
+        codeExample: |
+          // ✅ GOOD
+          export class MyTool implements Tool<MyToolInput> {
+            static readonly TOOL_NAME = 'my-tool';
+
+            getDefinition(): ToolDefinition {
+              return {
+                name: MyTool.TOOL_NAME,
+                description: 'Tool description',
+                inputSchema: { /* JSON schema */ }
+              };
+            }
+
+            async execute(input: MyToolInput): Promise<CallToolResult> {
+              // Delegate to service
+            }
+          }
+      - rule: Use static TOOL_NAME constant with snake_case naming
+        codeExample: |
+          // ✅ GOOD
+          static readonly TOOL_NAME = 'file_read';
+          static readonly TOOL_NAME = 'code_review';
+
+          // ❌ BAD
+          static readonly TOOL_NAME = 'FileRead';  // Wrong: should be snake_case
+          static readonly toolName = 'file-read';   // Wrong: not static readonly
+      - rule: Delegate business logic to services
+        codeExample: |
+          // ✅ GOOD
+          async execute(input: MyToolInput): Promise<CallToolResult> {
+            try {
+              const result = await this.myService.processData(input);
+              return {
+                content: [{ type: 'text', text: JSON.stringify(result) }]
+              };
+            } catch (error) {
+              return {
+                content: [{ type: 'text', text: error.message }],
+                isError: true
+              };
+            }
+          }
+
+          // ❌ BAD - complex logic in execute
+          async execute(input: MyToolInput): Promise<CallToolResult> {
+            const data = await fs.readFile(input.path);
+            const parsed = JSON.parse(data);
+            const filtered = parsed.items.filter(x => x.active);
+            // ... 50 more lines of business logic
+          }
+      - rule: Handle errors with isError flag
+        codeExample: |
+          // ✅ GOOD
+          catch (error) {
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({ error: error.message })
+              }],
+              isError: true
+            };
+          }
+    should_do:
+      - rule: Add comprehensive input validation via JSON Schema
+        codeExample: |
+          inputSchema: {
+            type: 'object',
+            properties: {
+              file_path: {
+                type: 'string',
+                description: 'Path to the file',
+                minLength: 1
+              }
+            },
+            required: ['file_path'],
+            additionalProperties: false
+          }
+      - rule: Include JSDoc comments for complex logic
+    must_not_do:
+      - rule: Put complex business logic in execute method
+        codeExample: |
+          // ❌ BAD - 100+ lines of file processing, YAML parsing, validation
+          async execute(input: Input): Promise<CallToolResult> {
+            const path = input.template_name
+              ? join(templatesRoot, input.template_name)
+              : join(templatesRoot, 'global');
+            // ... 100 more lines of business logic
+          }
+
+          // ✅ GOOD - thin orchestration layer
+          async execute(input: Input): Promise<CallToolResult> {
+            try {
+              const result = await this.rulesService.addRule(input);
+              return {
+                content: [{ type: 'text', text: JSON.stringify(result) }]
+              };
+            } catch (error) {
+              return this.handleError(error);
+            }
+          }
+      - rule: Skip error handling
+      - rule: Use hardcoded values - use configuration or constants
+  - pattern: src/services/**/*.ts
+    description: Service Layer Implementation Standards
+    inherits:
+      - export-standards
+      - error-handling
+      - type-safety
+      - documentation-standards
+      - naming-conventions
+    must_do:
+      - rule: Create service classes with clear single responsibility
+        codeExample: |
+          // ✅ GOOD
+          export class TemplateFinderService {
+            async findTemplateForFile(filePath: string): Promise<TemplateMapping> {
+              // Implementation
+            }
+          }
+      - rule: Use dependency injection for other services
+        codeExample: |
+          // ✅ GOOD
+          export class CodeReviewService {
+            constructor(
+              private ruleFinder: RuleFinder,
+              private llmService: ClaudeCodeLLMService
+            ) {}
+          }
+      - rule: Return typed results - never use implicit any
+        codeExample: |
+          // ✅ GOOD
+          async processData(input: string): Promise<ProcessedResult> {
+            return { success: true, data: processed };
+          }
+    must_not_do:
+      - rule: Create static-only utility classes - use functions instead
+        codeExample: |
+          // ❌ BAD
+          export class StringUtils {
+            static capitalize(str: string) { }
+            static trim(str: string) { }
+          }
+
+          // ✅ GOOD
+          export function capitalize(str: string): string { }
+          export function trim(str: string): string { }
+      - rule: Mix multiple concerns in one service
+      - rule: Use synchronous blocking operations for I/O
+  - pattern: src/commands/**/*.ts
+    description: CLI Command Implementation Standards
+    inherits:
+      - export-standards
+      - error-handling
+      - type-safety
+      - async-await-patterns
+    must_do:
+      - rule: Use Commander.js pattern with async action handlers
+        codeExample: |
+          // ✅ GOOD
+          export const myCommand = new Command('my-command')
+            .description('Command description')
+            .argument('<arg>', 'Argument description')
+            .option('-v, --verbose', 'Enable verbose output')
+            .action(async (arg: string, options: Options) => {
+              try {
+                // Implementation
+              } catch (error) {
+                console.error('Error:', error);
+                process.exit(1);
+              }
+            });
+      - rule: Handle errors gracefully with process.exit()
+        codeExample: |
+          // ✅ GOOD
+          catch (error) {
+            console.error('❌ Error:', error.message);
+            process.exit(1);
+          }
+      - rule: Provide clear option descriptions and default values
+    must_not_do:
+      - rule: Use synchronous blocking operations in action handlers
+      - rule: Missing error handling - always use try-catch
+      - rule: Hardcode values - use options or environment variables
+  - pattern: src/index.ts
+    description: Main barrel export file for public API
+    inherits:
+      - export-standards
+    must_do:
+      - rule: Export all public-facing modules using named exports
+        codeExample: |-
+          // ✅ GOOD - Named exports
+          export { server } from './server/index';
+          export type * from './types/index';
+          export { MyTool } from './tools/MyTool';
+          export { MyService } from './services/MyService';
+      - rule: Group exports by category with comments
+        codeExample: |-
+          // Server
+          export { server } from './server/index';
+
+          // Types
+          export type * from './types/index';
+
+          // Tools
+          export { MyTool } from './tools/MyTool';
+      - rule: Use 'export type *' for type-only exports
+        codeExample: |-
+          // ✅ GOOD
+          export type * from './types/index';
+
+          // ❌ BAD
+          export * from './types/index';
+    must_not_do:
+      - rule: Export CLI or command-related modules
+        codeExample: |-
+          // ❌ BAD - CLI is for bin usage only
+          export { mcpServeCommand } from './commands/mcp-serve';
+
+          // ✅ GOOD - Only library/server API
+          export { server } from './server/index';
+      - rule: Use wildcard exports (be explicit)
+        codeExample: |-
+          // ❌ BAD
+          export * from './tools/index';
+
+          // ✅ GOOD
+          export { Tool1, Tool2 } from './tools/index';
+      - rule: Use default exports
+      - rule: Export internal implementation details
+  - pattern: src/cli.ts
+    description: Main CLI entry point standards
+    inherits:
+      - export-standards
+      - error-handling
+    must_do:
+      - rule: Register all CLI commands in main program
+        codeExample: |
+          // ✅ GOOD
+          import { myCommand } from './commands/my-command';
+
+          program.addCommand(myCommand);
+      - rule: Include shebang for executable scripts
+        codeExample: |
+          #!/usr/bin/env node
+    must_not_do:
+      - rule: Hardcode command logic in cli.ts - use separate command files
+  - pattern: src/server/index.ts
+    description: MCP Server setup standards
+    inherits:
+      - export-standards
+      - error-handling
+    must_do:
+      - rule: Register all tools in ListToolsRequestSchema handler
+        codeExample: |
+          // ✅ GOOD
+          server.setRequestHandler(ListToolsRequestSchema, async () => ({
+            tools: [
+              myTool.getDefinition(),
+              otherTool.getDefinition(),
+            ],
+          }));
+      - rule: Handle tool calls in CallToolRequestSchema handler
+        codeExample: |
+          // ✅ GOOD
+          server.setRequestHandler(CallToolRequestSchema, async (request) => {
+            const { name, arguments: args } = request.params;
+
+            if (name === MyTool.TOOL_NAME) {
+              return await myTool.execute(args as any);
+            }
+
+            throw new Error(`Unknown tool: ${name}`);
+          });
+      - rule: Initialize tools with optional configuration
+    must_not_do:
+      - rule: Skip error handling for tool execution
+  - pattern: tests/**/*.test.ts
+    description: Test file standards
+    inherits:
+      - naming-conventions
+      - type-safety
+    must_do:
+      - rule: Use descriptive test names with 'should...' pattern
+        codeExample: |
+          // ✅ GOOD
+          it('should return user when valid ID is provided', () => {
+            // Test implementation
+          });
+      - rule: Mock external dependencies and services
+        codeExample: |
+          // ✅ GOOD
+          const mockService = {
+            getData: vi.fn().mockResolvedValue({ data: 'test' })
+          };
+      - rule: Test both success and error paths
+    should_do:
+      - rule: Test input validation
+      - rule: Verify return value structure
+      - rule: Check edge cases and boundary conditions
+  - pattern: src/prompts/**/*.ts
+    description: MCP Prompt Implementation Standards
+    inherits:
+      - export-standards
+      - error-handling
+      - type-safety
+    must_do:
+      - rule: Implement Prompt interface with getDefinition and execute
+        codeExample: |-
+          export class MyPrompt implements Prompt {
+            getDefinition() {
+              return {
+                name: 'my-prompt',
+                description: 'Generate prompt for task',
+                arguments: [
+                  {
+                    name: 'topic',
+                    description: 'Topic to analyze',
+                    required: true
+                  }
+                ]
+              };
+            }
+
+            async execute(args: { topic: string }): Promise<GetPromptResult> {
+              return {
+                messages: [
+                  {
+                    role: 'user',
+                    content: {
+                      type: 'text',
+                      text: `Analyze: ${args.topic}`
+                    }
+                  }
+                ]
+              };
+            }
+          }
+      - rule: Return GetPromptResult with messages array
+        codeExample: |-
+          return {
+            messages: [
+              { role: 'user', content: { type: 'text', text: 'prompt' } }
+            ]
+          };
+      - rule: Define clear prompt arguments with descriptions
+        codeExample: |-
+          arguments: [
+            {
+              name: 'context',
+              description: 'Context for the prompt',
+              required: true
+            },
+            {
+              name: 'format',
+              description: 'Output format',
+              required: false
+            }
+          ]
+    must_not_do:
+      - rule: Return empty messages array
+        codeExample: |-
+          // ❌ BAD
+          return { messages: [] };
+
+          // ✅ GOOD
+          return {
+            messages: [
+              { role: 'user', content: { type: 'text', text: prompt } }
+            ]
+          };
+      - rule: Mix multiple concerns in one prompt
+        codeExample: |-
+          // ❌ BAD - Prompt handles code review + testing + docs
+          class AllInOnePrompt implements Prompt { }
+
+          // ✅ GOOD - Separate prompts
+          class CodeReviewPrompt implements Prompt { }
+          class TestGenerationPrompt implements Prompt { }
+      - rule: Use hardcoded messages without arguments
+  - pattern: src/transports/**/*.ts
+    description: MCP Transport Setup Standards
+    inherits:
+      - export-standards
+      - error-handling
+      - async-await-patterns
+    must_do:
+      - rule: Use async/await for transport connection
+        codeExample: |-
+          async function main() {
+            const transport = new StdioServerTransport();
+            await server.connect(transport);
+          }
+
+          main().catch((error) => {
+            console.error('Server error:', error);
+            process.exit(1);
+          });
+      - rule: Handle connection errors gracefully
+        codeExample: |-
+          async function startServer() {
+            try {
+              const transport = new StdioServerTransport();
+              await server.connect(transport);
+              console.log('Server started successfully');
+            } catch (error) {
+              console.error('Failed to start server:', error);
+              process.exit(1);
+            }
+          }
+      - rule: Import correct transport for use case (Stdio or SSE)
+        codeExample: |-
+          // For stdio (CLI usage)
+          import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+
+          // For SSE (HTTP usage)
+          import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+    must_not_do:
+      - rule: Mix multiple transports in same entry point
+        codeExample: |-
+          // ❌ BAD - Multiple transports
+          const stdioTransport = new StdioServerTransport();
+          const sseTransport = new SSEServerTransport();
+          await server.connect(stdioTransport);
+          await server.connect(sseTransport);
+
+          // ✅ GOOD - Separate entry points
+          // index.ts - stdio only
+          // server-http.ts - SSE only
+      - rule: Skip error handling on connect()
+        codeExample: |-
+          // ❌ BAD
+          await server.connect(transport); // No error handling
+
+          // ✅ GOOD
+          try {
+            await server.connect(transport);
+          } catch (error) {
+            console.error('Connection failed:', error);
+            process.exit(1);
+          }
+      - rule: Use synchronous connection methods
+  - pattern: src/types/**/*.ts
+    description: Type Definitions and Interfaces Standards
+    inherits:
+      - export-standards
+      - type-safety
+      - documentation-standards
+    must_do:
+      - rule: Define clear interfaces for all data structures
+        codeExample: |-
+          export interface ToolInput {
+            filePath: string;
+            options?: {
+              verbose?: boolean;
+              format?: 'json' | 'yaml';
+            };
+          }
+
+          export interface ToolResult {
+            success: boolean;
+            data?: unknown;
+            error?: string;
+          }
+      - rule: Use TypeScript utility types for type transformations
+        codeExample: |-
+          export type PartialToolInput = Partial<ToolInput>;
+          export type RequiredToolInput = Required<ToolInput>;
+          export type ToolInputKeys = keyof ToolInput;
+
+          // Pick specific fields
+          export type ToolConfig = Pick<ToolInput, 'options'>;
+      - rule: Add JSDoc comments for complex types
+        codeExample: |-
+          /**
+           * Configuration for the MCP tool execution
+           * @property timeout - Execution timeout in milliseconds
+           * @property retries - Number of retry attempts
+           */
+          export interface ToolConfig {
+            timeout: number;
+            retries: number;
+          }
+      - rule: Use const assertions for literal types
+        codeExample: |-
+          export const TOOL_CATEGORIES = {
+            FILE: 'file',
+            CODE: 'code',
+            SEARCH: 'search'
+          } as const;
+
+          export type ToolCategory = typeof TOOL_CATEGORIES[keyof typeof TOOL_CATEGORIES];
+    must_not_do:
+      - rule: Use 'any' type - use 'unknown' or proper types
+        codeExample: |-
+          // ❌ BAD
+          export interface Result {
+            data: any;
+          }
+
+          // ✅ GOOD
+          export interface Result<T = unknown> {
+            data: T;
+          }
+      - rule: Create types without exports
+        codeExample: |-
+          // ❌ BAD
+          interface Config { } // Not exported
+
+          // ✅ GOOD
+          export interface Config { }
+      - rule: Mix implementation with type definitions
+        codeExample: |-
+          // ❌ BAD - Implementation in types file
+          export class MyService { }
+          export interface MyInterface { }
+
+          // ✅ GOOD - Only types
+          export interface MyInterface { }
+          export type MyType = { };
+      - rule: Use default exports for types
+        codeExample: |-
+          // ❌ BAD
+          export default interface Config { }
+
+          // ✅ GOOD
+          export interface Config { }
+  - pattern: src/commands/index.ts
+    description: CLI Barrel Export Standards
+    inherits:
+      - export-standards
+    must_do:
+      - rule: Export all CLI commands from index.ts using barrel exports
+        codeExample: |-
+          export { myCommand } from './my-command';
+          export { anotherCommand } from './another-command';
+          export { utilityCommand } from './utility-command';
+      - rule: Use named exports for all commands
+        codeExample: |-
+          // ✅ GOOD - Named exports
+          export { processCommand } from './process';
+          export { analyzeCommand } from './analyze';
+
+          // ❌ BAD - Default exports
+          export { default as processCommand } from './process';
+    must_not_do:
+      - rule: Include implementation in index.ts - only exports
+        codeExample: |-
+          // ❌ BAD - Implementation in barrel file
+          export const myCommand = new Command('my').action(() => {});
+
+          // ✅ GOOD - Only exports
+          export { myCommand } from './my-command';
+      - rule: Use wildcard exports - be explicit
+        codeExample: |-
+          // ❌ BAD
+          export * from './commandss';
+
+          // ✅ GOOD
+          export { command1, command2 } from './commands';
+  - pattern: src/tools/index.ts
+    description: Tools Barrel Export Standards
+    inherits:
+      - export-standards
+    must_do:
+      - rule: Export all tools from index.ts using barrel exports
+        codeExample: |-
+          export { MyTool } from './MyTool';
+          export { AnotherTool } from './AnotherTool';
+      - rule: Use named exports for all tools
+        codeExample: |-
+          // ✅ GOOD
+          export { FileTool } from './FileTool';
+          export { CodeTool } from './CodeTool';
+    must_not_do:
+      - rule: Include tool implementation in index.ts
+        codeExample: |-
+          // ❌ BAD
+          export class MyTool implements Tool { }
+
+          // ✅ GOOD
+          export { MyTool } from './MyTool';
+      - rule: Use wildcard exports
+        codeExample: |-
+          // ❌ BAD
+          export * from './tools';
+
+          // ✅ GOOD
+          export { Tool1, Tool2 } from './tools';
+  - pattern: src/services/index.ts
+    description: Services Barrel Export Standards
+    inherits:
+      - export-standards
+    must_do:
+      - rule: Export all services from index.ts using barrel exports
+        codeExample: |-
+          export { UserService } from './UserService';
+          export { DataService } from './DataService';
+          export { FileService } from './FileService';
+      - rule: Group related services together in exports
+        codeExample: |-
+          // Database services
+          export { UserService } from './UserService';
+          export { OrderService } from './OrderService';
+
+          // Utility services
+          export { LoggerService } from './LoggerService';
+          export { CacheService } from './CacheService';
+    must_not_do:
+      - rule: Include service implementation in index.ts
+        codeExample: |-
+          // ❌ BAD
+          export class UserService { }
+
+          // ✅ GOOD
+          export { UserService } from './UserService';
+      - rule: Use wildcard exports
+        codeExample: |-
+          // ❌ BAD
+          export * from './services';
+
+          // ✅ GOOD  
+          export { Service1, Service2 } from './services';

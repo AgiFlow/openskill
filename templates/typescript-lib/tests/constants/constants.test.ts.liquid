@@ -1,0 +1,41 @@
+/**
+ * {{ constantsName | pascalCase }} Constants Tests
+ *
+ * DESIGN PATTERNS:
+ * - Verify constants maintain expected values
+ * - Test type safety and immutability
+ * - Validate exported structure
+ *
+ * CODING STANDARDS:
+ * - Use descriptive test names
+ * - Test both value and type correctness
+ * - Group related tests with describe blocks
+ * - Test immutability with 'as const'
+ *
+ * AVOID:
+ * - Overly complex test logic
+ * - Testing implementation details
+ * - Brittle tests that break with refactoring
+ */
+
+import { describe, it, expect } from 'vitest';
+import { DEFAULT_VALUE{% if withTypes %}, {{ constantsName | pascalCase }}Config{% endif %} } from '../src/constants/{{ constantsName }}.constants';
+
+describe('{{ constantsName | pascalCase }} Constants', () => {
+  it('should have correct default value', () => {
+    expect(DEFAULT_VALUE).toBe('default');
+  });
+
+{% if withTypes %}  it('should have correct config structure', () => {
+    expect({{ constantsName | pascalCase }}Config).toHaveProperty('exampleProp');
+    expect({{ constantsName | pascalCase }}Config.exampleProp).toBe('value');
+  });
+
+  it('should be immutable', () => {
+    // TypeScript should prevent this, but runtime check for safety
+    expect(() => {
+      // @ts-expect-error - Testing immutability
+      {{ constantsName | pascalCase }}Config.exampleProp = 'changed';
+    }).toThrow();
+  });
+{% endif %}});

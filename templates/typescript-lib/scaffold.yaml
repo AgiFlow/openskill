@@ -1,0 +1,178 @@
+boilerplate:
+  - name: scaffold-typescript-lib
+    targetFolder: packages
+    description: |-
+      A modern TypeScript library template built with tsdown for efficient dual ESM/CJS bundling, featuring full type declaration support and optimized for npm publishing.
+      Perfect for creating reusable utility libraries, SDK packages, shared component libraries, and framework-agnostic TypeScript modules that need to support both CommonJS and ES Module consumers.
+
+      Includes comprehensive TypeScript configuration with strict mode, Nx integration for monorepo compatibility, and automated build pipeline using tsdown for fast, optimized builds with automatic package.json exports generation.
+    variables_schema:
+      type: object
+      properties:
+        packageName:
+          type: string
+          description: The npm package name (e.g., @scope/package-name)
+        description:
+          type: string
+          description: Package description for package.json
+        author:
+          type: string
+          description: Package author name
+          default: AgiflowIO
+        license:
+          type: string
+          description: Package license
+          default: AGPL-3.0
+        withTests:
+          type: boolean
+          description: Include test setup with vitest
+          default: true
+      required:
+        - packageName
+        - description
+      additionalProperties: false
+    includes:
+      - package.json
+      - tsconfig.json
+      - tsdown.config.ts
+      - project.json
+      - src/index.ts
+      - src/types/index.ts
+      - vitest.config.ts?withTests=true
+    instruction: |-
+      TypeScript library template with tsdown bundler for dual ESM/CJS output and full type declaration support.
+
+      File purposes:
+      - package.json: NPM package configuration with dual ESM/CJS exports, tsdown build script, and publishing metadata
+      - tsconfig.json: TypeScript compiler configuration with ES2022 target, strict mode, and bundler module resolution
+      - tsdown.config.ts: Build configuration for tsdown bundler with ESM/CJS dual format, type declarations, and package.json exports auto-generation
+      - project.json: Nx project configuration defining build, typecheck, and lint targets for monorepo integration
+      - src/index.ts: Main entry point that exports all public APIs from submodules
+      - src/types/index.ts: Type definitions and interfaces for the library's public API
+
+      How to use the scaffolded code:
+      1. Add exports: Create new modules in src/ and re-export them in src/index.ts
+      2. Define types: Add interfaces, types, and type utilities in src/types/index.ts
+      3. Build: Run `pnpm build` to compile TypeScript and generate dual ESM/CJS bundles with type declarations
+      4. Type check: Run `pnpm typecheck` to validate TypeScript without emitting files
+      5. Publish: Update version in package.json, build, then publish to npm registry
+
+      Design patterns to follow:
+      - Modular exports: Use src/index.ts as the single entry point, re-exporting from feature modules
+      - Type-first development: Define types in src/types/ before implementation
+      - Dual format: tsdown automatically generates both ESM and CJS outputs with proper package.json exports
+      - Strict TypeScript: All code must pass strict mode type checking
+      - Package scoping: Use @scope/name pattern for organizational npm packages
+      - Build separation: Keep source in src/, compiled output in dist/ (gitignored)
+features:
+  - name: scaffold-service
+    description: Generate a new service class for TypeScript libraries following best practices with optional interface separation. Creates service implementation file, barrel export in src/services/index.ts, and comprehensive unit tests with Vitest. Perfect for creating reusable service modules with clear separation of concerns and full test coverage.
+    variables_schema:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: Name of the service (PascalCase, e.g., 'FileSystem', 'Database')
+        withInterface:
+          type: boolean
+          description: Generate a separate interface for the service
+          default: false
+        withTests:
+          type: boolean
+          description: Generate test file for the service
+          default: true
+      required:
+        - serviceName
+      additionalProperties: false
+    includes:
+      - src/services/ExampleService.ts->src/services/{{ serviceName | pascalCase }}Service.ts
+      - src/services/index.ts
+      - tests/services/ExampleService.test.ts->tests/services/{{ serviceName | pascalCase }}Service.test.ts?withTests=true
+    instruction: |-
+      Services follow a class-based pattern with optional interface separation for dependency injection and testing flexibility. The service class implements business logic and can be easily mocked or replaced through interfaces.
+
+      Place service implementations in src/services/ directory. For services with interfaces, define the interface in src/types/index.ts (prefixed with 'I') for better separation of concerns. Service names should be PascalCase and end with 'Service' suffix (e.g., FileSystemService, DatabaseService).
+
+      Export all services through src/services/index.ts barrel export for clean imports. Import services using: import { ServiceName } from '@package/services'.
+
+      Write comprehensive unit tests for all public methods in tests/services/[ServiceName].test.ts. Use Vitest with mocking for dependencies. Test both success and error cases.
+
+      IMPORTANT - Interface generation (if withInterface=true):
+      The scaffold generates the service class with interface implementation, but you must manually add the interface definition to src/types/index.ts. Add the following to src/types/index.ts:
+
+      export interface I{{ serviceName }}Service {
+        process(input: string): Promise<string>;
+        // Add your service method signatures
+      }
+    patterns:
+      - src/services/**/*.ts
+  - name: scaffold-util
+    description: Generate utility functions for TypeScript libraries following pure function patterns. Creates a utility module with exported helper functions, barrel export in src/utils/index.ts, and comprehensive unit tests with Vitest. Perfect for creating reusable pure functions like formatters, validators, parsers, or data transformers.
+    variables_schema:
+      type: object
+      properties:
+        utilName:
+          type: string
+          description: Name of the utility file in camelCase (e.g., 'stringHelpers', 'validators', 'formatters')
+        withTests:
+          type: boolean
+          description: Generate test file for the utility
+          default: true
+      required:
+        - utilName
+      additionalProperties: false
+    includes:
+      - src/utils/exampleUtil.ts->src/utils/{{ utilName }}.ts
+      - src/utils/index.ts
+      - tests/utils/exampleUtil.test.ts->tests/utils/{{ utilName }}.test.ts?withTests=true
+    instruction: |-
+      Utility functions follow a pure function pattern with no side effects. Each utility file contains related helper functions that can be used across the application.
+
+      Pattern explanation: Utilities are pure TypeScript functions exported from a module. They should be stateless, side-effect free, and focused on a single domain (string manipulation, validation, formatting, etc.). Utilities can be used by services or other utilities.
+
+      File organization: Utilities live in src/utils/{utilName}.ts. Test files mirror the source structure in tests/utils/{utilName}.test.ts. Export utilities from src/utils/index.ts for barrel imports.
+
+      Naming conventions: Utility files use camelCase (e.g., stringHelpers.ts, validators.ts). Function names use camelCase with descriptive verbs (validate, format, parse, transform). Use descriptive names that indicate purpose.
+
+      Usage guidelines: Import utilities from the package. Keep functions pure - no side effects or external dependencies. Export individual functions, not classes. Use TypeScript for type safety. Document complex logic with JSDoc comments.
+
+      Testing approach: Write unit tests for each exported function. Test edge cases, invalid inputs, and expected outputs. Use Vitest for testing framework. Test pure function behavior without mocking.
+    patterns:
+      - src/utils/**/*.ts
+  - name: scaffold-constants
+    description: Generate a new constants file for TypeScript libraries following best practices. Creates a strongly-typed constants module with proper exports and barrel export in src/constants/index.ts. Perfect for defining application-wide constants, configuration values, or enumerated types that need to be shared across the library.
+    variables_schema:
+      type: object
+      properties:
+        constantsName:
+          type: string
+          description: Name of the constants module (e.g., 'config', 'errors', 'api')
+        withTypes:
+          type: boolean
+          description: Include TypeScript type definitions for the constants
+          default: true
+        withTests:
+          type: boolean
+          description: Generate test file for the constants
+          default: false
+      required:
+        - constantsName
+      additionalProperties: false
+    includes:
+      - src/constants/constants.ts->src/constants/{{ constantsName }}.ts
+      - src/constants/index.ts
+      - tests/constants/constants.test.ts->tests/constants/{{ constantsName }}.test.ts?withTests=true
+    instruction: |-
+      Constants follow a strongly-typed module pattern with clear export structure and barrel exports. Constants should be organized by category and exported as const objects to ensure immutability and type safety.
+
+      Pattern explanation: Constants are collocated in src/constants/ folder with each domain having its own file (e.g., api.ts, config.ts). All constants are re-exported through src/constants/index.ts barrel export for clean imports.
+
+      File organization: Place constants in src/constants/{name}.ts. Test files mirror the source structure in tests/constants/{name}.test.ts. Export all constants through src/constants/index.ts.
+
+      Naming conventions: Constants files use camelCase names with .ts extension. Primitive constant names use UPPER_SNAKE_CASE. Object constants use PascalCase with 'as const' assertion.
+
+      Usage guidelines: Import constants using: import { API_CONFIG } from '@package/constants'. Always include JSDoc comments explaining purpose and usage. Use type inference over explicit types. Keep related constants grouped in const objects.
+
+      Testing approach: Write tests to verify constants maintain expected types and values. Test immutability using 'as const'. Test type inference and exported structure.
+    patterns:
+      - src/constants/**/*.ts

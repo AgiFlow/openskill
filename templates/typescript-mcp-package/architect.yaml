@@ -1,0 +1,354 @@
+features:
+  - name: mcp-tool-pattern
+    design_pattern: Tool Implementation Pattern
+    includes:
+      - src/tools/**/*.ts
+    description: |-
+      Design pattern for implementing MCP tools with proper separation of concerns.
+
+      ✅ **What TO DO:**
+      - Implement the Tool interface with getDefinition() and execute() methods
+      - Use static TOOL_NAME constant for tool identification
+      - Delegate business logic to services
+      - Return CallToolResult with content array
+      - Handle errors gracefully with isError flag
+
+      ❌ **What NOT TO DO:**
+      - Don't put business logic in execute() method
+      - Don't forget error handling
+      - Don't use hardcoded values
+      - Don't mix tool and service concerns
+
+      **Example:**
+      ```typescript
+      export class MyTool implements Tool<MyToolInput> {
+        static readonly TOOL_NAME = 'my-tool';
+        
+        getDefinition(): ToolDefinition {
+          return {
+            name: MyTool.TOOL_NAME,
+            description: 'Tool description',
+            inputSchema: { /* JSON schema */ }
+          };
+        }
+        
+        async execute(input: MyToolInput): Promise<CallToolResult> {
+          // Delegate to service
+        }
+      }
+      ```
+  - name: mcp-service-pattern
+    design_pattern: Service Layer Pattern
+    includes:
+      - src/services/**/*.ts
+    description: |-
+      Design pattern for implementing service classes that encapsulate business logic.
+
+      ✅ **What TO DO:**
+      - Create service classes with clear responsibilities
+      - Use dependency injection for other services
+      - Implement async/await for I/O operations
+      - Return typed results
+      - Add proper error handling with try-catch
+
+      ❌ **What NOT TO DO:**
+      - Don't create static-only utility classes (use functions instead)
+      - Don't mix multiple concerns in one service
+      - Don't forget to handle edge cases
+      - Don't use synchronous blocking operations
+
+      **Example:**
+      ```typescript
+      export class MyService {
+        constructor(private dependency: OtherService) {}
+        
+        async processData(input: string): Promise<Result> {
+          try {
+            const data = await this.dependency.fetch(input);
+            return { success: true, data };
+          } catch (error) {
+            return { success: false, error: error.message };
+          }
+        }
+      }
+      ```
+  - name: mcp-server-pattern
+    design_pattern: MCP Server Setup Pattern
+    includes:
+      - src/server/**/*.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for setting up MCP servers with proper tool and prompt registration.
+
+      ## What TO DO ✅
+
+      - Create a server instance using Server from @modelcontextprotocol/sdk/server/index.js
+      - Register all tools using server.tool() with tool definitions
+      - Register prompts using server.prompt() if needed
+      - Use proper error handling in request handlers
+      - Export server instance for transport setup
+      - Set up proper server info with name and version
+
+      ## What NOT TO DO ❌
+
+      - Don't register tools without proper definitions
+      - Don't forget error handling in handlers
+      - Don't hardcode server configuration
+      - Don't mix transport logic with server logic
+      - Don't forget to handle all tool requests
+
+      ## Examples
+
+      ### Basic MCP Server
+      ```typescript
+      import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+      import { MyTool } from '../tools/MyTool';
+
+      const server = new Server(
+        {
+          name: 'my-mcp-server',
+          version: '1.0.0',
+        },
+        {
+          capabilities: {
+            tools: {},
+          },
+        }
+      );
+
+      const myTool = new MyTool();
+
+      server.tool(
+        myTool.getDefinition().name,
+        myTool.getDefinition().description,
+        myTool.getDefinition().inputSchema,
+        async (args) => await myTool.execute(args)
+      );
+
+      export { server };
+      ```
+  - name: command-pattern
+    design_pattern: CLI Command Pattern
+    includes:
+      - src/commands/**/*.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for implementing CLI commands using Commander.js with proper argument parsing and help text.
+
+      ## What TO DO ✅
+
+      - Use Commander.js for CLI framework
+      - Define clear command names and descriptions
+      - Add proper options and arguments with types
+      - Use .action() handlers for command logic
+      - Delegate business logic to services or tools
+      - Add helpful examples in command descriptions
+      - Handle errors gracefully with process.exit()
+
+      ## What NOT TO DO ❌
+
+      - Don't put business logic directly in CLI handlers
+      - Don't forget to add help text and descriptions
+      - Don't use process.exit() without error codes
+      - Don't hardcode values that should be options
+      - Don't skip input validation
+
+      ## Examples
+
+      ### Basic CLI Command
+      ```typescript
+      import { Command } from 'commander';
+      import { MyService } from '../services/MyService';
+
+      const program = new Command();
+
+      program
+        .name('my-cli')
+        .description('CLI tool description')
+        .version('1.0.0');
+
+      program
+        .command('process')
+        .description('Process data')
+        .argument('<input>', 'Input data to process')
+        .option('-o, --output <file>', 'Output file')
+        .action(async (input: string, options) => {
+          try {
+            const service = new MyService();
+            const result = await service.process(input);
+            console.log(result);
+          } catch (error) {
+            console.error('Error:', error.message);
+            process.exit(1);
+          }
+        });
+
+      program.parse();
+      ```
+  - name: barrel-export-pattern
+    design_pattern: Barrel Export Pattern
+    includes:
+      - src/index.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for creating a clean public API using barrel exports in src/index.ts. This file serves as the main entry point for library consumers.
+
+      ## What TO DO ✅
+
+      - Export all public-facing modules (server, tools, services, types)
+      - Use named exports only (no default exports)
+      - Group exports by category with comments
+      - Use 'export type *' for type-only exports
+      - Keep in sync with module structure
+      - Export only what's needed for library consumers
+
+      ## What NOT TO DO ❌
+
+      - Don't export CLI commands or command-related modules
+      - Don't use wildcard exports (be explicit)
+      - Don't use default exports
+      - Don't export internal implementation details
+      - Don't mix CLI and library concerns
+
+      ## Examples
+
+      ### Public API Barrel Export
+      ```typescript
+      // Server
+      export { server } from './server';
+
+      // Types
+      export type * from './types';
+
+      // Transports
+      export { StdioTransportHandler } from './transports/stdio';
+      export { SseTransportHandler } from './transports/sse';
+
+      // Tools
+      export { FileTool } from './tools/FileTool';
+      export { CodeTool } from './tools/CodeTool';
+
+      // Services
+      export { FileService } from './services/FileService';
+      ```
+  - name: mcp-transport-pattern
+    design_pattern: MCP Transport Pattern
+    includes:
+      - src/transports/**/*.ts
+      - src/cli.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for setting up MCP server transports (stdio, SSE) with proper connection handling.
+
+      ## What TO DO ✅
+
+      - Use StdioServerTransport for stdio-based communication
+      - Use SSEServerTransport for Server-Sent Events
+      - Import server instance and connect to transport
+      - Handle connection errors gracefully
+      - Use async/await for transport connection
+      - Add proper TypeScript types for transport options
+
+      ## What NOT TO DO ❌
+
+      - Don't mix multiple transports in same entry point
+      - Don't forget error handling on connect()
+      - Don't hardcode transport configuration
+      - Don't skip proper cleanup on errors
+      - Don't use synchronous connection methods
+
+      ## Examples
+
+      ### Stdio Transport
+      ```typescript
+      import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+      import { server } from './server/index';
+
+      async function main() {
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+      }
+
+      main().catch((error) => {
+        console.error('Server error:', error);
+        process.exit(1);
+      });
+      ```
+
+      ### SSE Transport
+      ```typescript
+      import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+      import { server } from './server/index';
+
+      async function startSSEServer(port = 3000) {
+        const transport = new SSEServerTransport('/message', (response) => {
+          response.writeHead(200, { 'Content-Type': 'text/event-stream' });
+        });
+        
+        await server.connect(transport);
+        console.log(`SSE server running on port ${port}`);
+      }
+
+      startSSEServer().catch(console.error);
+      ```
+  - name: mcp-prompt-pattern
+    design_pattern: MCP Prompt Pattern
+    includes:
+      - src/prompts/**/*.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for implementing MCP prompts with proper message formatting and argument handling.
+
+      ## What TO DO ✅
+
+      - Implement the Prompt interface with getDefinition() and execute() methods
+      - Return GetPromptResult with messages array
+      - Use proper message roles (user, assistant)
+      - Define clear prompt arguments with descriptions
+      - Keep prompts focused and single-purpose
+      - Use TypeScript types for prompt arguments
+
+      ## What NOT TO DO ❌
+
+      - Don't return empty messages array
+      - Don't forget to handle all prompt arguments
+      - Don't mix multiple concerns in one prompt
+      - Don't use hardcoded messages without arguments
+      - Don't skip input validation
+
+      ## Examples
+
+      ### Basic Prompt
+      ```typescript
+      import type { Prompt, GetPromptResult } from '../types';
+
+      export class MyPrompt implements Prompt {
+        getDefinition() {
+          return {
+            name: 'my-prompt',
+            description: 'Generate a prompt for specific task',
+            arguments: [
+              {
+                name: 'topic',
+                description: 'Topic to generate prompt for',
+                required: true,
+              },
+            ],
+          };
+        }
+
+        async execute(args: { topic: string }): Promise<GetPromptResult> {
+          return {
+            messages: [
+              {
+                role: 'user',
+                content: {
+                  type: 'text',
+                  text: `Please analyze the following topic: ${args.topic}`,
+                },
+              },
+            ],
+          };
+        }
+      }
+      ```

@@ -1,0 +1,13 @@
+node_modules
+*.log
+.git
+.gitignore
+.env
+.env.*
+README.md
+tsconfig.json
+tsdown.config.ts
+vitest.config.ts
+sandbox
+src
+tests

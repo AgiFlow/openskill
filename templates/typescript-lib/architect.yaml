@@ -1,0 +1,547 @@
+features:
+  - name: barrel-export-pattern
+    design_pattern: Barrel Export Pattern for Public API
+    includes:
+      - src/index.ts
+      - src/**/index.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for organizing and exposing public APIs through barrel exports (index.ts files) that provide clean, centralized import paths.
+
+      ## What TO DO ✅
+
+      - Re-export all public APIs from submodules in src/index.ts
+      - Use named exports (not default exports) for better tree-shaking
+      - Group related exports together with comments
+      - Export types and implementations separately when needed
+      - Keep barrel files simple - only re-export, no logic
+      - Use explicit exports to control public API surface
+      - Add JSDoc comments for exported items in main index.ts
+      - Follow pattern: export { item } from './module' or export * from './module'
+      - Export type-only imports with 'export type' when appropriate
+
+      ## What NOT TO DO ❌
+
+      - Don't add business logic to index.ts files
+      - Don't use default exports (prefer named exports)
+      - Don't re-export internal/private modules
+      - Don't create circular dependencies
+      - Don't export everything blindly with export *
+      - Don't mix implementation and types in unclear ways
+      - Don't forget to update index.ts when adding new modules
+
+      ## Examples
+
+      ### Main Entry Point (src/index.ts)
+      ```typescript
+      // Export services
+      export { ExampleService } from './services/ExampleService';
+
+      // Export utilities
+      export { formatDate } from './utils/dateHelpers';
+      export { validateEmail } from './utils/validators';
+
+      // Export types
+      export type { ServiceConfig } from './types';
+      export * from './types';
+      ```
+
+      ### Barrel Export (src/services/index.ts)
+      ```typescript
+      export { ExampleService } from './ExampleService';
+      export { FileSystemService } from './FileSystemService';
+      ```
+
+      ### Type-Only Exports
+      ```typescript
+      export type { User } from './types/user';
+      export { UserService } from './services/UserService';
+      export type { IUserService } from './types';
+      ```
+  - name: service-class-pattern
+    design_pattern: TypeScript Service Class Pattern
+    includes:
+      - src/services/**/*.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for TypeScript service classes that encapsulate business logic with optional interface separation for dependency injection and testability.
+
+      ## What TO DO ✅
+
+      - Create class-based services with PascalCase names ending in 'Service'
+      - Define service interfaces in src/types/index.ts (prefix with 'I')
+      - Implement the interface in the service class
+      - Use dependency injection via constructor parameters
+      - Make methods async when performing I/O operations
+      - Use private methods for internal logic
+      - Export both class and interface (if using interfaces)
+      - Add comprehensive JSDoc comments for public methods
+      - Handle errors gracefully and throw typed errors
+      - Keep services focused on single responsibility
+      - Return typed results from all methods
+
+      ## What NOT TO DO ❌
+
+      - Don't create static-only utility classes (use functions instead)
+      - Don't mix multiple unrelated concerns in one service
+      - Don't forget to implement the interface
+      - Don't use 'any' type - always provide proper types
+      - Don't create services without exporting from barrel (index.ts)
+      - Don't forget error handling in methods
+      - Don't make services depend on UI or framework-specific code
+      - Don't skip JSDoc documentation for public APIs
+
+      ## Examples
+
+      ### Basic Service Class
+      ```typescript
+      export class FileSystemService {
+        async readFile(path: string): Promise<string> {
+          try {
+            // Implementation
+            return 'file content';
+          } catch (error) {
+            throw new Error(`Failed to read file: ${error}`);
+          }
+        }
+
+        private validatePath(path: string): boolean {
+          return path.length > 0;
+        }
+      }
+      ```
+
+      ### Service with Interface
+      ```typescript
+      // types/index.ts
+      export interface IDataService {
+        fetch(id: string): Promise<DataItem | null>;
+        save(item: DataItem): Promise<DataItem>;
+      }
+
+      // services/DataService.ts
+      export class DataService implements IDataService {
+        async fetch(id: string): Promise<DataItem | null> {
+          try {
+            return null;
+          } catch (error) {
+            throw new Error(`Failed to fetch: ${error}`);
+          }
+        }
+
+        async save(item: DataItem): Promise<DataItem> {
+          this.validateItem(item);
+          return item;
+        }
+
+        private validateItem(item: DataItem): void {
+          if (!item.id) throw new Error('Invalid item');
+        }
+      }
+      ```
+
+      ### Service with Dependency Injection
+      ```typescript
+      export class UserService {
+        constructor(
+          private logger: ILoggerService,
+          private cache: ICacheService
+        ) {}
+
+        async getUser(id: string): Promise<User | null> {
+          const cached = await this.cache.get(`user:${id}`);
+          if (cached) {
+            this.logger.log(`Cache hit for user ${id}`);
+            return JSON.parse(cached);
+          }
+          return this.fetchUserFromSource(id);
+        }
+      }
+      ```
+  - name: utility-function-pattern
+    design_pattern: Pure Utility Function Pattern
+    includes:
+      - src/utils/**/*.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for pure utility functions that are stateless, side-effect free, and focused on specific domains like string manipulation, validation, or formatting.
+
+      ## What TO DO ✅
+
+      - Create pure functions with no side effects
+      - Use descriptive function names with verbs (validate, format, parse, transform)
+      - Export named functions (not default exports)
+      - Add JSDoc comments with examples for all exported functions
+      - Use TypeScript for full type safety
+      - Group related utilities in the same file
+      - Name files in camelCase describing the domain (stringHelpers, validators)
+      - Make functions composable and reusable
+      - Return new values instead of mutating inputs
+      - Handle edge cases and invalid inputs gracefully
+
+      ## What NOT TO DO ❌
+
+      - Don't create functions with side effects (no console.log, no mutations)
+      - Don't use classes for utilities (use plain functions)
+      - Don't access external state or globals
+      - Don't perform I/O operations (that's for services)
+      - Don't use 'any' type - always type parameters and returns
+      - Don't forget to export functions from barrel index.ts
+      - Don't create overly complex utilities (break into smaller functions)
+      - Don't skip JSDoc documentation
+
+      ## Examples
+
+      ### String Utilities
+      ```typescript
+      export function capitalize(str: string): string {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      }
+
+      export function truncate(str: string, maxLength: number, suffix = '...'): string {
+        if (str.length <= maxLength) return str;
+        return str.slice(0, maxLength - suffix.length) + suffix;
+      }
+      ```
+
+      ### Validation Utilities
+      ```typescript
+      export function validateEmail(email: string): boolean {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      export function validateUrl(url: string): boolean {
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          return false;
+        }
+      }
+      ```
+
+      ### Array Utilities
+      ```typescript
+      export function unique<T>(arr: T[]): T[] {
+        return [...new Set(arr)];
+      }
+
+      export function chunk<T>(arr: T[], size: number): T[][] {
+        const chunks: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) {
+          chunks.push(arr.slice(i, i + size));
+        }
+        return chunks;
+      }
+      ```
+  - name: type-definition-pattern
+    design_pattern: TypeScript Type Definition Pattern
+    includes:
+      - src/types/**/*.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for organizing TypeScript type definitions, interfaces, and type utilities in a centralized types directory for better code organization and reusability.
+
+      ## What TO DO ✅
+
+      - Define all public types and interfaces in src/types/index.ts
+      - Use interface for object shapes that can be extended
+      - Use type for unions, intersections, and complex types
+      - Prefix service interfaces with 'I' (e.g., IUserService)
+      - Use PascalCase for type and interface names
+      - Export all types from src/types/index.ts
+      - Add JSDoc comments for complex types
+      - Use readonly for immutable properties
+      - Leverage TypeScript utility types (Partial, Pick, Omit, etc.)
+      - Group related types together with comments
+      - Use discriminated unions for variant types
+
+      ## What NOT TO DO ❌
+
+      - Don't use 'any' - prefer 'unknown' if type is truly unknown
+      - Don't create duplicate type definitions
+      - Don't use 'I' prefix for non-interface types
+      - Don't forget to export types from barrel file
+      - Don't mix types with implementation code
+      - Don't create overly complex nested types (break them down)
+      - Don't use enums (prefer const objects with 'as const')
+      - Don't forget JSDoc for public types
+
+      ## Examples
+
+      ### Basic Interfaces and Types
+      ```typescript
+      export interface User {
+        id: string;
+        email: string;
+        name: string;
+      }
+
+      export type OrderStatus = 'pending' | 'processing' | 'shipped';
+      ```
+
+      ### Service Interfaces
+      ```typescript
+      export interface IUserService {
+        getById(id: string): Promise<User | null>;
+        create(data: CreateUserInput): Promise<User>;
+      }
+
+      export interface ILoggerService {
+        log(message: string): void;
+        error(message: string, error?: Error): void;
+      }
+      ```
+
+      ### Discriminated Unions
+      ```typescript
+      export interface SuccessResult<T> {
+        success: true;
+        data: T;
+      }
+
+      export interface ErrorResult {
+        success: false;
+        error: string;
+      }
+
+      export type Result<T> = SuccessResult<T> | ErrorResult;
+      ```
+
+      ### Const Objects (Instead of Enums)
+      ```typescript
+      export const UserRole = {
+        ADMIN: 'admin',
+        USER: 'user',
+      } as const;
+
+      export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+      ```
+  - name: vitest-test-pattern
+    design_pattern: Vitest Unit Test Pattern
+    includes:
+      - tests/**/*.test.ts
+      - '**/*.spec.ts'
+    description: |-
+      ## Pattern Overview
+      Design pattern for writing comprehensive unit tests using Vitest with proper test organization, mocking, and coverage of success and error cases.
+
+      ## What TO DO ✅
+
+      - Mirror source structure in tests directory (tests/services/, tests/utils/)
+      - Name test files with .test.ts extension matching source file
+      - Use describe blocks to group related tests
+      - Use test or it for individual test cases
+      - Write descriptive test names that explain what is being tested
+      - Test both success and error cases
+      - Use expect assertions with specific matchers
+      - Mock external dependencies with vi.mock()
+      - Clean up mocks in beforeEach/afterEach hooks
+      - Use test.each for parameterized tests
+      - Aim for high code coverage (>80%)
+      - Test edge cases and boundary conditions
+
+      ## What NOT TO DO ❌
+
+      - Don't skip error case testing
+      - Don't write tests that depend on execution order
+      - Don't use actual external services (mock them)
+      - Don't test implementation details (test behavior)
+      - Don't forget to clean up mocks between tests
+      - Don't write overly complex tests (break them down)
+      - Don't use console.log for debugging (use debugger or test output)
+      - Don't skip type checking in tests
+
+      ## Examples
+
+      ### Testing Utility Functions
+      ```typescript
+      import { describe, test, expect } from 'vitest';
+      import { capitalize } from '../../src/utils/stringHelpers';
+
+      describe('capitalize', () => {
+        test('capitalizes first letter', () => {
+          expect(capitalize('hello')).toBe('Hello');
+        });
+
+        test('handles empty string', () => {
+          expect(capitalize('')).toBe('');
+        });
+      });
+      ```
+
+      ### Testing with Mocks
+      ```typescript
+      import { describe, test, expect, beforeEach, vi } from 'vitest';
+      import { UserService } from '../../src/services/UserService';
+
+      describe('UserService', () => {
+        let mockCache: ICacheService;
+
+        beforeEach(() => {
+          mockCache = {
+            get: vi.fn(),
+            set: vi.fn(),
+          };
+        });
+
+        test('returns cached user', async () => {
+          vi.mocked(mockCache.get).mockResolvedValue('{"id":"1"}');
+          const service = new UserService(mockCache);
+          const result = await service.getUser('1');
+          expect(result).toEqual({ id: '1' });
+        });
+      });
+      ```
+
+      ### Parameterized Tests
+      ```typescript
+      import { test, expect } from 'vitest';
+      import { validateEmail } from '../../src/utils/validators';
+
+      test.each([
+        ['user@example.com', true],
+        ['invalid', false],
+      ])('validateEmail(%s) returns %s', (email, expected) => {
+        expect(validateEmail(email)).toBe(expected);
+      });
+      ```
+  - name: constants-pattern
+    design_pattern: Strongly-Typed Constants Pattern
+    includes:
+      - src/constants/**/*.constants.ts
+      - src/constants/index.ts
+    description: |-
+      ## Pattern Overview
+      Design pattern for organizing strongly-typed, immutable constants in a centralized constants directory with barrel exports for clean imports. Constants are grouped by domain and use 'as const' for type safety.
+
+      ## What TO DO ✅
+
+      - Use UPPER_SNAKE_CASE for primitive constants (MAX_RETRIES, API_VERSION)
+      - Use PascalCase with 'as const' for object constants (ApiConfig, ErrorCodes)
+      - Export inferred types from object constants using typeof
+      - Add JSDoc comments for all exported constants
+      - Group related constants in const objects
+      - Place constants in src/constants/{domain}.constants.ts files
+      - Re-export all constants through src/constants/index.ts barrel
+      - Use wildcard exports in barrel file (export * from './api.constants')
+      - Keep constants immutable with const and 'as const'
+      - Separate constants by domain/category (api, config, errors)
+
+      ## What NOT TO DO ❌
+
+      - Don't use mutable exports (let or var) - always use const
+      - Don't export magic numbers without context or JSDoc
+      - Don't mix unrelated constants in same file
+      - Don't create objects without 'as const' assertion
+      - Don't use enums (prefer const objects with 'as const')
+      - Don't add business logic to constant files
+      - Don't forget to export from barrel file (index.ts)
+      - Don't use selective exports in barrel (use export *)
+
+      ## Examples
+
+      ### Primitive Constants
+      ```typescript
+      /**
+       * Maximum number of retry attempts for API calls
+       * @default 3
+       */
+      export const MAX_RETRIES = 3;
+
+      /**
+       * Default timeout for HTTP requests in milliseconds
+       */
+      export const DEFAULT_HTTP_TIMEOUT = 5000;
+
+      /**
+       * API version identifier
+       */
+      export const API_VERSION = 'v1';
+      ```
+
+      ### Object Constants with Types
+      ```typescript
+      /**
+       * API endpoint configuration
+       * @property baseUrl - Base URL for API calls
+       * @property timeout - Request timeout in milliseconds
+       * @property retries - Number of retry attempts
+       */
+      export const ApiConfig = {
+        baseUrl: 'https://api.example.com',
+        timeout: 5000,
+        retries: 3,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      } as const;
+
+      /** Inferred type from ApiConfig */
+      export type ApiConfigType = typeof ApiConfig;
+      ```
+
+      ### Status/Error Code Constants
+      ```typescript
+      /**
+       * HTTP status codes used throughout the application
+       */
+      export const HttpStatus = {
+        OK: 200,
+        CREATED: 201,
+        BAD_REQUEST: 400,
+        UNAUTHORIZED: 401,
+        NOT_FOUND: 404,
+        SERVER_ERROR: 500,
+      } as const;
+
+      /** HTTP status code type */
+      export type HttpStatusCode = typeof HttpStatus[keyof typeof HttpStatus];
+
+      /**
+       * Application error codes
+       */
+      export const ErrorCode = {
+        INVALID_INPUT: 'INVALID_INPUT',
+        NOT_FOUND: 'NOT_FOUND',
+        UNAUTHORIZED: 'UNAUTHORIZED',
+      } as const;
+
+      export type ErrorCodeType = typeof ErrorCode[keyof typeof ErrorCode];
+      ```
+
+      ### Barrel Export (src/constants/index.ts)
+      ```typescript
+      /**
+       * Constants Barrel Export
+       * Centralized export point for all application constants
+       */
+
+      // API constants
+      export * from './api.constants';
+      export * from './endpoints.constants';
+
+      // Configuration constants
+      export * from './config.constants';
+
+      // Error constants
+      export * from './errors.constants';
+      export * from './statusCodes.constants';
+      ```
+
+      ### Usage in Code
+      ```typescript
+      import { MAX_RETRIES, ApiConfig, HttpStatus } from '@package/constants';
+
+      async function fetchData() {
+        const response = await fetch(ApiConfig.baseUrl, {
+          method: 'GET',
+          headers: ApiConfig.headers,
+        });
+
+        if (response.status === HttpStatus.OK) {
+          return response.json();
+        }
+      }
+      ```
