@@ -10,6 +10,8 @@ Model Context Protocol (MCP) server that enables [Anthropic Skills](https://www.
 
 OpenSkill makes Anthropic's Claude Code Skills universally accessible across the AI coding ecosystem. It provides a secure, sandboxed execution environment for skills using Docker containers, enabling any MCP-compatible AI assistant to execute skills safely with full isolation, volume mounting, and customizable Docker images.
 
+**[Watch the demo video](https://youtu.be/_eqdpZCYIJ4)**
+
 ### Key Features
 
 - **Universal Compatibility**: Use Anthropic Skills with any MCP-compatible AI coding agent
