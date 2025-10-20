@@ -49,12 +49,13 @@ export interface ContainerInfo {
 }
 
 export class SandboxService {
-  private imageName = 'openskill-http';
+  private imageName = 'agiflowai/openskill:latest';
   private containerPort = 3000;
   private dockerfilePath: string;
   private mountPath: string;
   private customContainerName?: string;
   private repoPrefix: string;
+  private isCustomImage: boolean;
 
   constructor(mountPath?: string, containerName?: string, imageName?: string) {
     const cwd = process.cwd();
@@ -62,6 +63,9 @@ export class SandboxService {
     // Use custom image name if provided, otherwise use default
     if (imageName) {
       this.imageName = imageName;
+      this.isCustomImage = true;
+    } else {
+      this.isCustomImage = false;
     }
 
     // Resolve Dockerfile path - check if we're already in openskill package or need to navigate to it
@@ -133,6 +137,23 @@ export class SandboxService {
       );
       return stdout.trim().length > 0;
     } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Pull Docker image from registry
+   */
+  async pullImage(): Promise<boolean> {
+    try {
+      console.error(`Pulling Docker image ${this.imageName}...`);
+      await execAsync(`docker pull ${this.imageName}`);
+      console.error(`Docker image ${this.imageName} pulled successfully`);
+      return true;
+    } catch (error) {
+      console.error(
+        `Failed to pull Docker image: ${error instanceof Error ? error.message : String(error)}`
+      );
       return false;
     }
   }
@@ -218,10 +239,27 @@ export class SandboxService {
       // Get port for new container
       const hostPort = await this.getAvailablePort(skillName);
 
-      // Check if image is built, if not build it
+      // Ensure image is available
       const imageBuilt = await this.isImageBuilt();
       if (!imageBuilt) {
-        await this.buildImage();
+        // If using default image (not custom), try to pull from Docker Hub first
+        if (!this.isCustomImage) {
+          console.error('Image not found locally, attempting to pull from Docker Hub...');
+          const pulled = await this.pullImage();
+
+          // If pull fails, fall back to building
+          if (!pulled) {
+            console.error('Pull failed, falling back to local build...');
+            await this.buildImage();
+          }
+        } else {
+          // For custom images, try to pull first, then build as fallback
+          const pulled = await this.pullImage();
+          if (!pulled) {
+            console.error('Pull failed, attempting to build...');
+            await this.buildImage();
+          }
+        }
       }
 
       // Check if container exists but is stopped
@@ -454,7 +492,7 @@ export class SandboxService {
 
   /**
    * Prewarm Docker environment
-   * This builds the image if needed and optionally starts a default container
+   * This pulls the image from Docker Hub if needed and optionally starts a default container
    * to reduce cold start time when skills are first used
    */
   async prewarm(): Promise<void> {
@@ -468,11 +506,27 @@ export class SandboxService {
         return;
       }
 
-      // Build image if it doesn't exist
+      // Check if image exists locally
       const imageBuilt = await this.isImageBuilt();
       if (!imageBuilt) {
-        console.error('Docker image not found, building...');
-        await this.buildImage();
+        // If using default image (not custom), pull from Docker Hub
+        if (!this.isCustomImage) {
+          console.error('Docker image not found, pulling from Docker Hub...');
+          const pulled = await this.pullImage();
+
+          // If pull fails, fall back to building
+          if (!pulled) {
+            console.error('Pull failed, falling back to local build...');
+            await this.buildImage();
+          }
+        } else {
+          // For custom images, try to pull first, then build as fallback
+          const pulled = await this.pullImage();
+          if (!pulled) {
+            console.error('Pull failed, attempting to build...');
+            await this.buildImage();
+          }
+        }
         console.error('Docker image prewarmed successfully');
       } else {
         console.error('Docker image already exists');
