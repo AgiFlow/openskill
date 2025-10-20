@@ -8,7 +8,11 @@
     "test": "nx run-many -t test",
     "lint": "nx run-many -t lint",
     "graph": "nx graph",
-    "reset": "nx reset"
+    "reset": "nx reset",
+    "prepare": "husky",
+    "commit": "cz",
+    "release": "nx release",
+    "release:dry-run": "nx release --dry-run"
   },
   "keywords": [],
   "author": "",
@@ -16,9 +20,16 @@
   "packageManager": "pnpm@10.15.1",
   "devDependencies": {
     "@nx/workspace": "^21.6.5",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "nx": "21.6.5"
   },
   "dependencies": {
     "canvas": "^3.2.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
