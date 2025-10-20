@@ -12,8 +12,11 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
     devDependencies:
+      '@nx/js':
+        specifier: 21.6.5
+        version: 21.6.5(@babel/traverse@7.28.4)(nx@21.6.5)
       '@nx/workspace':
-        specifier: ^21.6.5
+        specifier: 21.6.5
         version: 21.6.5
       commitizen:
         specifier: ^4.3.1

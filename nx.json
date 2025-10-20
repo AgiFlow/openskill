@@ -25,17 +25,20 @@
     "sharedGlobals": []
   },
   "release": {
-    "projects": ["packages/*"],
-    "changelog": {
-      "workspaceChangelog": {
-        "createRelease": "github"
-      },
-      "projectChangelog": {
-        "createRelease": "github"
+    "projects": ["packages/*", "apps/*"],
+    "version": {
+      "conventionalCommits": true,
+      "generatorOptions": {
+        "updateDependents": "auto"
       }
     },
-    "version": {
-      "conventionalCommits": true
+    "changelog": {
+      "projectChangelogs": {
+        "createRelease": "github",
+        "renderOptions": {
+          "authors": true
+        }
+      }
     }
   }
 }

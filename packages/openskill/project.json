@@ -1,7 +1,16 @@
 {
-  "name": "openskill",
+  "name": "@agiflowai/openskill",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/openskill",
   "projectType": "application",
-  "sourceTemplate": "typescript-mcp-package"
+  "sourceTemplate": "typescript-mcp-package",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc --noEmit",
+        "cwd": "packages/aicode-utils"
+      }
+    }
+  }
 }

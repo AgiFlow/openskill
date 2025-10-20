@@ -44,6 +44,9 @@
     "vitest": "^2.1.8"
   },
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
