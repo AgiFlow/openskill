@@ -28,6 +28,7 @@ export interface UseSkillToolOptions {
   workdir?: string;
   mountPath?: string;
   containerName?: string;
+  imageName?: string;
 }
 
 export class UseSkillTool implements Tool<UseSkillToolInput> {
@@ -38,13 +39,15 @@ export class UseSkillTool implements Tool<UseSkillToolInput> {
   private workdir: string;
   private mountPath?: string;
   private containerName?: string;
+  private imageName?: string;
 
   constructor(options: UseSkillToolOptions = {}) {
     this.timeout = options.timeout ?? 30000;
     this.workdir = options.workdir ?? '/workspace';
     this.mountPath = options.mountPath;
     this.containerName = options.containerName;
-    this.sandboxService = new SandboxService(this.mountPath, this.containerName);
+    this.imageName = options.imageName;
+    this.sandboxService = new SandboxService(this.mountPath, this.containerName, this.imageName);
   }
 
   getDefinition(): ToolDefinition {
@@ -52,7 +55,8 @@ export class UseSkillTool implements Tool<UseSkillToolInput> {
       name: UseSkillTool.TOOL_NAME,
       description: `You must execute a skill in a sandboxed Docker environment with bash command execution for safety.
 Please use relative path to Working Directory, the container mount uses working directory /workspace.
-- Working Directory: ${this.workdir}${this.mountPath ? `\n- Host Mount: ${this.mountPath} -> ${this.workdir}` : ''}`,
+- Working Directory: ${this.workdir}${this.mountPath ? `\n- Host Mount: ${this.mountPath} -> ${this.workdir}` : ''}
+PS: If the script is large, you write a script first to a file and MUST execute it with use-skill tool command to improve safety.`,
       inputSchema: {
         type: 'object',
         properties: {

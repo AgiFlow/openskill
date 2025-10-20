@@ -28,6 +28,7 @@ export interface ServerOptions {
   useSkillWorkdir?: string;
   useSkillMountPath?: string;
   useSkillContainerName?: string;
+  useSkillImageName?: string;
   disabledTools?: string[];
   skillsPath?: string;
   prewarmDocker?: boolean;
@@ -63,13 +64,15 @@ export function createServer(options: ServerOptions = {}): ServerInstance {
     workdir: options.useSkillWorkdir,
     mountPath: options.useSkillMountPath,
     containerName: options.useSkillContainerName,
+    imageName: options.useSkillImageName,
   };
   const useSkillTool = new UseSkillTool(useSkillToolOptions);
 
   // Create sandbox service for cleanup
   const sandboxService = new SandboxService(
     options.useSkillMountPath,
-    options.useSkillContainerName
+    options.useSkillContainerName,
+    options.useSkillImageName
   );
 
   // Filter out disabled tools

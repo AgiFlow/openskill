@@ -108,12 +108,21 @@ app.post('/bash', (c) => {
         clearTimeout(timeoutId);
         exitCode = code;
 
+        const exitMessage = killed
+          ? 'Command execution timed out and was terminated'
+          : code !== 0 && signal
+          ? `Command terminated by signal: ${signal}`
+          : code !== 0
+          ? `Command failed with exit code: ${code}`
+          : 'Command completed successfully';
+
         await stream.write(
           JSON.stringify({
             type: 'exit',
             exitCode: code,
             signal,
             killed,
+            message: exitMessage,
             timestamp: new Date().toISOString()
           }) + '\n'
         );
@@ -122,10 +131,18 @@ app.post('/bash', (c) => {
       // Handle errors
       proc.on('error', async (error) => {
         clearTimeout(timeoutId);
+        const errorMessage = error.message.includes('ENOENT')
+          ? `Command not found or executable missing: ${command.split(' ')[0]}`
+          : error.message.includes('EACCES')
+          ? `Permission denied executing: ${command.split(' ')[0]}`
+          : `Failed to execute command: ${error.message}`;
+
         await stream.write(
           JSON.stringify({
             type: 'error',
-            message: error.message
+            message: errorMessage,
+            command,
+            originalError: error.message
           }) + '\n'
         );
       });
@@ -196,6 +213,12 @@ app.post('/bash/exec', async (c) => {
       proc.on('exit', (code) => {
         clearTimeout(timeoutId);
 
+        const message = killed
+          ? 'Command execution timed out and was terminated'
+          : code !== 0
+          ? `Command failed with exit code: ${code}`
+          : 'Command completed successfully';
+
         const response = c.json({
           success: code === 0 && !killed,
           stdout,
@@ -203,6 +226,7 @@ app.post('/bash/exec', async (c) => {
           exitCode: code,
           killed,
           timeout: killed,
+          message,
         });
         resolve(response);
       });
@@ -210,9 +234,17 @@ app.post('/bash/exec', async (c) => {
       // Handle errors
       proc.on('error', (error) => {
         clearTimeout(timeoutId);
+        const errorMessage = error.message.includes('ENOENT')
+          ? `Command not found or executable missing: ${command.split(' ')[0]}`
+          : error.message.includes('EACCES')
+          ? `Permission denied executing: ${command.split(' ')[0]}`
+          : `Failed to execute command: ${error.message}`;
+
         const response = c.json({
           success: false,
-          error: error.message,
+          error: errorMessage,
+          command,
+          originalError: error.message,
           exitCode: 1,
         });
         resolve(response);

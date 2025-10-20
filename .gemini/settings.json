@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "openskill-mcp": {
+      "disabled": false,
+      "command": "openskill",
+      "args": [
+        "mcp-serve", "--container-name", "open-skill"
+      ]
+    }
+  }
+}

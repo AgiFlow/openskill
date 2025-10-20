@@ -79,6 +79,10 @@ export const mcpServeCommand = new Command('mcp-serve')
     'Custom Docker container name (allows reusing one container for multiple skills, default: openskill-skill-{skillName})'
   )
   .option(
+    '--image <name>',
+    'Custom Docker image name to use instead of building default openskill-http image'
+  )
+  .option(
     '--no-prewarm',
     'Disable Docker image prewarming on server startup'
   )
@@ -90,6 +94,7 @@ export const mcpServeCommand = new Command('mcp-serve')
       const mountPath = options.mount;
       const skillsPath = options.skillsPath;
       const containerName = options.containerName;
+      const imageName = options.image;
       const prewarm = options.noPrewarm !== true;
       const disabledTools = options.disableTools
         ? options.disableTools.split(',').map((t: string) => t.trim())
@@ -101,6 +106,7 @@ export const mcpServeCommand = new Command('mcp-serve')
           useSkillWorkdir: workdir,
           useSkillMountPath: mountPath,
           useSkillContainerName: containerName,
+          useSkillImageName: imageName,
           disabledTools,
           skillsPath,
           prewarmDocker: prewarm,

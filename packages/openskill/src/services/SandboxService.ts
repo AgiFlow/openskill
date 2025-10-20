@@ -12,6 +12,11 @@
  * - Handle Docker errors gracefully
  * - Implement timeout and resource limits
  * - Clean up containers after use
+ *
+ * USAGE:
+ * - Pass mountPath to specify volume mount location
+ * - Pass containerName to use custom container naming
+ * - Pass imageName to use a pre-built Docker image instead of default
  */
 
 import { exec } from 'child_process';
@@ -51,8 +56,13 @@ export class SandboxService {
   private customContainerName?: string;
   private repoPrefix: string;
 
-  constructor(mountPath?: string, containerName?: string) {
+  constructor(mountPath?: string, containerName?: string, imageName?: string) {
     const cwd = process.cwd();
+
+    // Use custom image name if provided, otherwise use default
+    if (imageName) {
+      this.imageName = imageName;
+    }
 
     // Resolve Dockerfile path - check if we're already in openskill package or need to navigate to it
     const currentDirDockerfile = path.join(cwd, 'Dockerfile');
@@ -129,6 +139,9 @@ export class SandboxService {
 
   /**
    * Build Docker image
+   * Note: If a custom image name was provided to constructor, this will still
+   * attempt to build using the Dockerfile. To use a pre-built image, ensure
+   * the image exists before calling methods that depend on it.
    */
   async buildImage(): Promise<void> {
     try {

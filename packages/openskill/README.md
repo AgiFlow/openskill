@@ -1,15 +1,21 @@
 # @agiflowai/openskill
 
-Model Context Protocol (MCP) server providing skill management and sandboxed execution capabilities.
+[![npm version](https://img.shields.io/npm/v/@agiflowai/openskill.svg?style=flat-square)](https://www.npmjs.com/package/@agiflowai/openskill)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%203.0-blue.svg?style=flat-square)](https://opensource.org/licenses/AGPL-3.0)
+[![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/NsB6q9Vas9?style=flat-square)](https://discord.gg/NsB6q9Vas9)
+
+Model Context Protocol (MCP) server that enables [Anthropic Skills](https://www.anthropic.com/news/skills) to work with any coding agent and client that supports MCP servers. Provides skill management and sandboxed execution capabilities.
 
 ## Features
 
-- **Skill Management**: Read and execute Claude Code skills from `.claude/skills/` directory
-- **Sandboxed Execution**: Execute bash commands in isolated Docker containers
+- **Universal Compatibility**: Makes Anthropic Skills work with any MCP-compatible AI coding agent (Cline, Roo Code, Continue, Zed, etc.)
+- **Skill Management**: Read and execute skills from `.claude/skills/` directory
+- **Sandboxed Execution**: Execute bash commands in isolated Docker containers for security
 - **Volume Mounting**: Mount host directories into containers for file access
-- **MCP Tools**: `get-skill` and `use-skill` tools for Claude Code integration
+- **MCP Tools**: `get-skill` and `use-skill` tools for seamless integration
 - **CLI Commands**: Direct command-line access to all functionality
-- **Docker Image**: Pre-configured environment with Python (uv, pip, poetry, pipenv) and Node.js
+- **Custom Images**: Support for custom Docker images tailored to your needs
+- **Pre-configured Environment**: Python (uv, pip, poetry, pipenv, Pillow) and Node.js tooling out of the box
 
 ## Requirements
 
@@ -72,7 +78,10 @@ node dist/cli.js mcp-serve [options]
 - `--workdir <path>`: Default working directory in container (default: "/workspace")
 - `--mount <path>`: Host path to mount into container /workspace
 - `--skills-path <path>`: Path to skills directory (default: ".claude/skills")
+- `--container-name <name>`: Custom Docker container name (allows reusing one container for multiple skills)
+- `--image <name>`: Custom Docker image name to use instead of building default openskill-http image
 - `--disable-tools <tools>`: Comma-separated list of tools to disable
+- `--no-prewarm`: Disable Docker image prewarming on server startup
 
 **Example:**
 ```bash
@@ -81,6 +90,12 @@ node dist/cli.js mcp-serve --mount /Users/username/projects
 
 # Start with custom skills path
 node dist/cli.js mcp-serve --skills-path ./my-skills
+
+# Start with custom Docker image
+node dist/cli.js mcp-serve --image my-custom-image:latest --mount /Users/username/projects
+
+# Start with custom container name (reuse same container for all skills)
+node dist/cli.js mcp-serve --container-name shared-skill-container --mount /Users/username/projects
 ```
 
 ### use-skill
@@ -115,45 +130,120 @@ node dist/cli.js http-serve [options]
 - `-p, --port <port>`: Port to listen on (default: 3000)
 - `-h, --host <host>`: Host to bind to (default: "localhost")
 
-## Usage with Claude Code
+## Usage with MCP Clients
 
-Add to your Claude Code MCP configuration:
+OpenSkill can be used with any MCP-compatible client. Below are basic configuration examples for popular tools.
+
+### Cline
 
 ```json
 {
   "mcpServers": {
-    "openskill": {
-      "command": "node",
-      "args": [
-        "/path/to/openskill/dist/cli.js",
-        "mcp-serve",
-        "--mount",
-        "/Users/username/workspace"
-      ]
+    "openskill-mcp": {
+      "disabled": false,
+      "command": "openskill",
+      "args": ["mcp-serve"]
     }
   }
 }
 ```
 
-With custom skills path:
+### Cursor
+
+Add to `~/.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "openskill": {
-      "command": "node",
-      "args": [
-        "/path/to/openskill/dist/cli.js",
-        "mcp-serve",
-        "--mount",
-        "/Users/username/workspace",
-        "--skills-path",
-        "./custom-skills"
-      ]
+    "openskill-mcp": {
+      "command": "openskill",
+      "args": ["mcp-serve"]
     }
   }
 }
 ```
+
+### Windsurf
+
+```json
+{
+  "mcpServers": {
+    "openskill-mcp": {
+      "command": "openskill",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+### VS Code
+
+```json
+"mcp": {
+  "servers": {
+    "openskill-mcp": {
+      "type": "stdio",
+      "command": "openskill",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+### Zed
+
+```json
+{
+  "context_servers": {
+    "openskill-mcp": {
+      "source": "custom",
+      "command": "openskill",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+### Roo Code
+
+```json
+{
+  "mcpServers": {
+    "openskill-mcp": {
+      "command": "openskill",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+### Continue
+
+```json
+{
+  "mcpServers": {
+    "openskill-mcp": {
+      "command": "openskill",
+      "args": ["mcp-serve"]
+    }
+  }
+}
+```
+
+### Claude Code
+
+```json
+{
+  "mcpServers": {
+    "openskill-mcp": {
+      "command": "openskill",
+      "args": ["mcp-serve", "--disable-tools", "get-skill"]
+    }
+  }
+}
+```
+
+**Note:** For advanced configuration options (mount paths, container names, custom Docker images, skills paths, timeouts, etc.), see the [CLI Commands](#cli-commands) section above.
 
 ## Docker Environment
 
@@ -169,6 +259,7 @@ The sandbox Docker image includes:
 - uv (fast package installer)
 - poetry (dependency management)
 - pipenv (virtual environment manager)
+- Pillow (PIL - image processing library)
 
 **System Tools:**
 - bash

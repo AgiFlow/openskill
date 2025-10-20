@@ -3,7 +3,7 @@
     "openskill-mcp": {
       "type": "stdio",
       "command": "node",
-      "args": ["packages/openskill/dist/cli.cjs", "mcp-serve", "--disable-tools", "get-skill", "--container-name", "open-skill"],
+      "args": ["packages/openskill/dist/cli.cjs", "mcp-serve", "--disable-tools", "get-skill"],
       "disabled": false
     }
   }

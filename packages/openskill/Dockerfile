@@ -30,7 +30,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
 # Install common Python tools using pip (now unrestricted)
-RUN pip3 install --no-cache-dir pipenv poetry
+RUN pip3 install --no-cache-dir pipenv poetry pillow
 
 # Verify installations
 RUN echo "=== Verifying installations ===" && \
@@ -41,6 +41,7 @@ RUN echo "=== Verifying installations ===" && \
     uv --version && \
     pipenv --version && \
     poetry --version && \
+    python3 -c "import PIL; print(f'Pillow {PIL.__version__}')" && \
     git --version && \
     bash --version | head -n 1
 
