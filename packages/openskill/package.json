@@ -33,6 +33,7 @@
     "hono": "^4.10.1"
   },
   "devDependencies": {
+    "@nx/js": "^21.6.5",
     "@types/node": "^22.0.0",
     "tsdown": "^0.15.6",
     "typescript": "5.9.3",
