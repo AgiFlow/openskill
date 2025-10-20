@@ -85,17 +85,14 @@ node dist/cli.js mcp-serve [options]
 
 **Example:**
 ```bash
-# Start MCP server with custom mount
-node dist/cli.js mcp-serve --mount /Users/username/projects
-
 # Start with custom skills path
 node dist/cli.js mcp-serve --skills-path ./my-skills
 
 # Start with custom Docker image
-node dist/cli.js mcp-serve --image my-custom-image:latest --mount /Users/username/projects
+node dist/cli.js mcp-serve --image my-custom-image:latest
 
 # Start with custom container name (reuse same container for all skills)
-node dist/cli.js mcp-serve --container-name shared-skill-container --mount /Users/username/projects
+node dist/cli.js mcp-serve --container-name shared-skill-container
 ```
 
 ### use-skill

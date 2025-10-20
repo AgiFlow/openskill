@@ -20,53 +20,6 @@ OpenSkill makes Anthropic's Claude Code Skills universally accessible across the
 - **Volume Mounting**: Access host files within containers
 - **Performance**: Docker image prewarming and container reuse
 
-## Structure
-
-```
-openskill/
-├── packages/
-│   └── openskill/     # Main MCP server package
-├── nx.json            # Nx configuration
-├── pnpm-workspace.yaml  # pnpm workspace configuration
-└── tsconfig.base.json  # Base TypeScript configuration
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- Docker (for sandboxed skill execution)
-- pnpm (v10.15.1 or later)
-
-### Installation
-
-```bash
-# Install dependencies
-pnpm install
-
-# Build the project
-pnpm build
-```
-
-### Quick Start
-
-```bash
-# Start the MCP server
-node packages/openskill/dist/cli.js mcp-serve --mount $(pwd)
-
-# Or use with custom Docker image
-node packages/openskill/dist/cli.js mcp-serve --image my-custom-image:latest
-```
-
-### Available Scripts
-
-- `pnpm build` - Build all projects
-- `pnpm test` - Run tests for all projects
-- `pnpm lint` - Lint all projects
-- `pnpm graph` - View the project dependency graph
-- `pnpm reset` - Reset Nx cache
-
 ## Usage with MCP Clients
 
 OpenSkill works with any MCP-compatible client. Here are quick setup examples:
@@ -123,30 +76,50 @@ For detailed documentation, see [packages/openskill/README.md](packages/openskil
 
 ## Development
 
-### Adding Projects
-
-#### Add an Application
-
-```bash
-pnpm exec nx generate @nx/node:application my-app --directory=apps/my-app
+```
+openskill/
+├── packages/
+│   └── openskill/     # Main MCP server package
+├── nx.json            # Nx configuration
+├── pnpm-workspace.yaml  # pnpm workspace configuration
+└── tsconfig.base.json  # Base TypeScript configuration
 ```
 
-#### Add a Library
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20+
+- Docker (for sandboxed skill execution)
+- pnpm (v10.15.1 or later)
+
+### Installation
 
 ```bash
-pnpm exec nx generate @nx/node:library my-lib --directory=packages/my-lib
+# Install dependencies
+pnpm install
+
+# Build the project
+pnpm build
 ```
 
-### Nx and pnpm Workspace
+### Quick Start
 
-This monorepo uses:
-- **pnpm workspace** for package management and dependency hoisting
-- **Nx** for task orchestration, caching, and dependency graph management
+```bash
+# Start the MCP server
+node packages/openskill/dist/cli.js mcp-serve --mount $(pwd)
 
-The combination provides:
-- Fast installs with pnpm's efficient dependency management
-- Smart task caching and parallel execution with Nx
-- Scalable monorepo architecture
+# Or use with custom Docker image
+node packages/openskill/dist/cli.js mcp-serve --image my-custom-image:latest
+```
+
+### Available Scripts
+
+- `pnpm build` - Build all projects
+- `pnpm test` - Run tests for all projects
+- `pnpm lint` - Lint all projects
+- `pnpm graph` - View the project dependency graph
+- `pnpm reset` - Reset Nx cache
 
 ## License
 
