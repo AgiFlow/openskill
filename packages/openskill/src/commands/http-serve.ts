@@ -16,7 +16,7 @@
 
 import { Command } from 'commander';
 import { serve } from '@hono/node-server';
-import app from '../server.js';
+import app from '../proxy-server.js';
 import chalk from 'chalk';
 
 export const httpServeCommand = new Command('http-serve')

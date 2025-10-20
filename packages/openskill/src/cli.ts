@@ -21,6 +21,7 @@ import { Command } from 'commander';
 import { mcpServeCommand } from './commands/mcp-serve.js';
 import { httpServeCommand } from './commands/http-serve.js';
 import { useSkillCommand } from './commands/use-skill.js';
+import { getSkillCommand } from './commands/get-skill.js';
 import packageJson from '../package.json' assert { type: 'json' };
 
 /**
@@ -38,6 +39,7 @@ async function main() {
   program.addCommand(mcpServeCommand);
   program.addCommand(httpServeCommand);
   program.addCommand(useSkillCommand);
+  program.addCommand(getSkillCommand);
 
   // Parse arguments
   await program.parseAsync(process.argv);

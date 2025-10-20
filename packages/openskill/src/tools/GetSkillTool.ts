@@ -35,7 +35,28 @@ export class GetSkillTool implements Tool<GetSkillToolInput> {
     this.skillService = new SkillService(options.skillsPath);
   }
 
-  getDefinition(): ToolDefinition {
+  async getDefinition(): Promise<ToolDefinition> {
+    // Fetch available skills to include in the description
+    const skills = await this.skillService.getSkills();
+
+    const availableSkillsSection = skills.length > 0
+      ? `\n\n<available_skills>\n${skills
+          .map(
+            (s) => `<skill>
+<name>
+${s.name}
+</name>
+<description>
+${s.description} (${s.location})
+</description>
+<location>
+${s.location}
+</location>
+</skill>`
+          )
+          .join('\n')}\n</available_skills>\n`
+      : '';
+
     return {
       name: GetSkillTool.TOOL_NAME,
       description: `Execute a skill within the main conversation
@@ -52,7 +73,7 @@ Important:
 - Only use skills listed in <available_skills> below
 - Do not invoke a skill that is already running
 - Do not use this tool for built-in CLI commands (like /help, /clear, etc.)
-</skills_instructions>`,
+</skills_instructions>${availableSkillsSection}`,
       inputSchema: {
         type: 'object',
         properties: {

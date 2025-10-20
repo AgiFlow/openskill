@@ -17,6 +17,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
+import { existsSync } from 'fs';
 
 const execAsync = promisify(exec);
 
@@ -46,22 +47,45 @@ export class SandboxService {
   private imageName = 'openskill-http';
   private containerPort = 3000;
   private dockerfilePath: string;
-  private mountPath?: string;
+  private mountPath: string;
+  private customContainerName?: string;
+  private repoPrefix: string;
 
-  constructor(mountPath?: string) {
-    // Resolve Dockerfile path relative to the project root
-    this.dockerfilePath = path.resolve(
-      process.cwd(),
-      'packages/openskill'
-    );
-    this.mountPath = mountPath;
+  constructor(mountPath?: string, containerName?: string) {
+    const cwd = process.cwd();
+
+    // Resolve Dockerfile path - check if we're already in openskill package or need to navigate to it
+    const currentDirDockerfile = path.join(cwd, 'Dockerfile');
+    const packageDirDockerfile = path.join(cwd, 'packages/openskill');
+
+    // Check if Dockerfile exists in current directory (already in packages/openskill)
+    if (existsSync(currentDirDockerfile)) {
+      this.dockerfilePath = cwd;
+    } else {
+      // Try packages/openskill path (running from repo root)
+      this.dockerfilePath = packageDirDockerfile;
+    }
+
+    // Default to mounting current working directory if no mount path specified
+    this.mountPath = mountPath || cwd;
+    this.customContainerName = containerName;
+
+    // Get repo directory name for container prefix
+    // This allows same skill to have different containers per repo
+    this.repoPrefix = path.basename(cwd).toLowerCase().replace(/[^a-z0-9-]/g, '-');
   }
 
   /**
    * Get container name for a skill
+   * If custom container name is provided, prefix it with repo directory name
+   * Otherwise, use repo-prefixed skill-specific container name
+   * This ensures different repos get different containers for the same skill
    */
   private getContainerName(skillName: string): string {
-    return `openskill-skill-${skillName}`;
+    if (this.customContainerName) {
+      return `${this.repoPrefix}-${this.customContainerName}`;
+    }
+    return `${this.repoPrefix}-openskill-skill-${skillName}`;
   }
 
   /**
@@ -137,17 +161,39 @@ export class SandboxService {
   }
 
   /**
+   * Get the actual port a container is using
+   */
+  private async getContainerPort(containerName: string): Promise<number | null> {
+    try {
+      const { stdout } = await execAsync(
+        `docker port ${containerName} ${this.containerPort}`
+      );
+      // Output format: "0.0.0.0:3218" or "[::]:3218"
+      const match = stdout.match(/:(\d+)/);
+      if (match) {
+        return parseInt(match[1], 10);
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Start a skill-specific container
    */
   async startContainer(skillName: string): Promise<ContainerInfo> {
     try {
       const containerName = this.getContainerName(skillName);
-      const hostPort = await this.getAvailablePort(skillName);
 
       // Check if container already exists and is running
       const isRunning = await this.isContainerRunning(skillName);
 
       if (isRunning) {
+        // Get the actual port the running container is using
+        const actualPort = await this.getContainerPort(containerName);
+        const hostPort = actualPort || await this.getAvailablePort(skillName);
+
         return {
           containerId: containerName,
           port: hostPort,
@@ -155,6 +201,9 @@ export class SandboxService {
           url: `http://localhost:${hostPort}`,
         };
       }
+
+      // Get port for new container
+      const hostPort = await this.getAvailablePort(skillName);
 
       // Check if image is built, if not build it
       const imageBuilt = await this.isImageBuilt();
@@ -167,10 +216,18 @@ export class SandboxService {
         `docker ps -a --filter "name=${containerName}" --format "{{.Names}}"`
       );
 
+      let actualHostPort = hostPort;
+
       if (existingContainer.trim() === containerName) {
-        // Start existing container
+        // Start existing container and get its actual port
         console.error(`Starting existing container ${containerName}...`);
         await execAsync(`docker start ${containerName}`);
+
+        // Get the port the existing container was using
+        const existingPort = await this.getContainerPort(containerName);
+        if (existingPort) {
+          actualHostPort = existingPort;
+        }
       } else {
         // Start new container
         console.error(`Starting new container ${containerName}...`);
@@ -190,13 +247,13 @@ export class SandboxService {
       }
 
       // Wait for container to be healthy
-      await this.waitForContainer(hostPort);
+      await this.waitForContainer(actualHostPort);
 
       return {
         containerId: containerName,
-        port: hostPort,
+        port: actualHostPort,
         status: 'running',
-        url: `http://localhost:${hostPort}`,
+        url: `http://localhost:${actualHostPort}`,
       };
     } catch (error) {
       throw new Error(
@@ -341,33 +398,18 @@ export class SandboxService {
   }
 
   /**
-   * Write file to container workspace
+   * Write file to container workspace using bash command
    */
   async writeFile(skillName: string, filePath: string, content: string): Promise<void> {
     try {
-      const containerInfo = await this.startContainer(skillName);
+      // Escape content for safe shell usage
+      const escapedContent = content.replace(/'/g, "'\\''");
+      const command = `cat > '${filePath}' << 'EOF'\n${escapedContent}\nEOF`;
 
-      const response = await fetch(
-        `${containerInfo.url}/file/write`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            path: filePath,
-            content,
-          }),
-        }
-      );
-
-      const result = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-      };
+      const result = await this.executeCommand(skillName, { command });
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to write file');
+        throw new Error(result.error || result.stderr || 'Failed to write file');
       }
     } catch (error) {
       throw new Error(
@@ -377,39 +419,55 @@ export class SandboxService {
   }
 
   /**
-   * Read file from container workspace
+   * Read file from container workspace using bash command
    */
   async readFile(skillName: string, filePath: string): Promise<string> {
     try {
-      const containerInfo = await this.startContainer(skillName);
-
-      const response = await fetch(
-        `${containerInfo.url}/file/read`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            path: filePath,
-          }),
-        }
-      );
-
-      const result = (await response.json()) as {
-        success?: boolean;
-        error?: string;
-        content?: string;
-      };
+      const result = await this.executeCommand(skillName, {
+        command: `cat '${filePath}'`
+      });
 
       if (!result.success) {
-        throw new Error(result.error || 'Failed to read file');
+        throw new Error(result.error || result.stderr || 'Failed to read file');
       }
 
-      return result.content || '';
+      return result.stdout;
     } catch (error) {
       throw new Error(
         `Failed to read file: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Prewarm Docker environment
+   * This builds the image if needed and optionally starts a default container
+   * to reduce cold start time when skills are first used
+   */
+  async prewarm(): Promise<void> {
+    try {
+      console.error('Prewarming Docker environment...');
+
+      // Check if Docker is available
+      const dockerAvailable = await this.isDockerAvailable();
+      if (!dockerAvailable) {
+        console.error('Docker is not available, skipping prewarm');
+        return;
+      }
+
+      // Build image if it doesn't exist
+      const imageBuilt = await this.isImageBuilt();
+      if (!imageBuilt) {
+        console.error('Docker image not found, building...');
+        await this.buildImage();
+        console.error('Docker image prewarmed successfully');
+      } else {
+        console.error('Docker image already exists');
+      }
+    } catch (error) {
+      // Don't fail startup if prewarming fails, just log the error
+      console.error(
+        `Warning: Failed to prewarm Docker environment: ${error instanceof Error ? error.message : String(error)}`
       );
     }
   }

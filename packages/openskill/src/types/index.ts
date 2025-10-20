@@ -30,7 +30,7 @@ export interface ToolDefinition {
  * Base tool interface following MCP SDK patterns
  */
 export interface Tool<TInput = any> {
-  getDefinition(): ToolDefinition;
+  getDefinition(): ToolDefinition | Promise<ToolDefinition>;
   execute(input: TInput): Promise<CallToolResult>;
 }
 

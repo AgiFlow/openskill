@@ -27,6 +27,7 @@ export interface UseSkillToolOptions {
   timeout?: number;
   workdir?: string;
   mountPath?: string;
+  containerName?: string;
 }
 
 export class UseSkillTool implements Tool<UseSkillToolInput> {
@@ -36,31 +37,21 @@ export class UseSkillTool implements Tool<UseSkillToolInput> {
   private timeout: number;
   private workdir: string;
   private mountPath?: string;
+  private containerName?: string;
 
   constructor(options: UseSkillToolOptions = {}) {
     this.timeout = options.timeout ?? 30000;
     this.workdir = options.workdir ?? '/workspace';
     this.mountPath = options.mountPath;
-    this.sandboxService = new SandboxService(this.mountPath);
+    this.containerName = options.containerName;
+    this.sandboxService = new SandboxService(this.mountPath, this.containerName);
   }
 
   getDefinition(): ToolDefinition {
     return {
       name: UseSkillTool.TOOL_NAME,
-      description: `Execute a skill in a sandboxed Docker environment with bash command execution.
-
-Please use relative path to {HOST_MACHINE_CWD}, the container uses working directory /workspace.
-
-This tool:
-1. Checks if Docker image exists, builds if needed
-2. Starts a skill-specific Docker container (if not running)
-3. Executes the provided bash command in the container
-4. Returns the command output
-
-Each skill gets its own isolated container for safety and resource management.
-
-Configured with:
-- Timeout: ${this.timeout}ms
+      description: `You must execute a skill in a sandboxed Docker environment with bash command execution for safety.
+Please use relative path to Working Directory, the container mount uses working directory /workspace.
 - Working Directory: ${this.workdir}${this.mountPath ? `\n- Host Mount: ${this.mountPath} -> ${this.workdir}` : ''}`,
       inputSchema: {
         type: 'object',

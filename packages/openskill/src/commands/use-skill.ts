@@ -36,11 +36,16 @@ export const useSkillCommand = new Command('use-skill')
     '-m, --mount <path>',
     'Host path to mount into container /workspace'
   )
+  .option(
+    '-c, --container-name <name>',
+    'Custom Docker container name (allows reusing one container for multiple skills)'
+  )
   .action(async (skillName: string, bash: string, options) => {
     try {
       const timeout = parseInt(options.timeout, 10);
       const workdir = options.workdir;
       const mountPath = options.mount;
+      const containerName = options.containerName;
 
       // Log configuration
       console.error(chalk.blue('Executing skill...'));
@@ -51,6 +56,9 @@ export const useSkillCommand = new Command('use-skill')
       if (mountPath) {
         console.error(chalk.gray(`Mount: ${mountPath} -> ${workdir}`));
       }
+      if (containerName) {
+        console.error(chalk.gray(`Container: ${containerName}`));
+      }
       console.error();
 
       // Create and execute tool
@@ -58,6 +66,7 @@ export const useSkillCommand = new Command('use-skill')
         timeout,
         workdir,
         mountPath,
+        containerName,
       });
 
       const result = await tool.execute({

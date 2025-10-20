@@ -48,9 +48,9 @@
       "import": "./dist/cli.js",
       "require": "./dist/cli.cjs"
     },
-    "./server": {
-      "import": "./dist/server.js",
-      "require": "./dist/server.cjs"
+    "./proxy-server": {
+      "import": "./dist/proxy-server.js",
+      "require": "./dist/proxy-server.cjs"
     },
     "./package.json": "./package.json"
   }

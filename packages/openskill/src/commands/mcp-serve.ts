@@ -74,6 +74,14 @@ export const mcpServeCommand = new Command('mcp-serve')
     'Path to skills directory',
     '.claude/skills'
   )
+  .option(
+    '--container-name <name>',
+    'Custom Docker container name (allows reusing one container for multiple skills, default: openskill-skill-{skillName})'
+  )
+  .option(
+    '--no-prewarm',
+    'Disable Docker image prewarming on server startup'
+  )
   .action(async (options) => {
     try {
       const transportType = options.type.toLowerCase();
@@ -81,19 +89,23 @@ export const mcpServeCommand = new Command('mcp-serve')
       const workdir = options.workdir;
       const mountPath = options.mount;
       const skillsPath = options.skillsPath;
+      const containerName = options.containerName;
+      const prewarm = options.noPrewarm !== true;
       const disabledTools = options.disableTools
         ? options.disableTools.split(',').map((t: string) => t.trim())
         : [];
 
       if (transportType === 'stdio') {
-        const server = createServer({
+        const { server, cleanup } = createServer({
           useSkillTimeout: timeout,
           useSkillWorkdir: workdir,
           useSkillMountPath: mountPath,
+          useSkillContainerName: containerName,
           disabledTools,
           skillsPath,
+          prewarmDocker: prewarm,
         });
-        const handler = new StdioTransportHandler(server);
+        const handler = new StdioTransportHandler(server, cleanup);
         await startServer(handler);
       } else {
         console.error(`Unknown transport type: ${transportType}. Use: stdio`);

@@ -25,9 +25,11 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 export class StdioTransportHandler {
   private server: Server;
   private transport: StdioServerTransport | null = null;
+  private cleanup?: () => Promise<void>;
 
-  constructor(server: Server) {
+  constructor(server: Server, cleanup?: () => Promise<void>) {
     this.server = server;
+    this.cleanup = cleanup;
   }
 
   async start(): Promise<void> {
@@ -37,6 +39,16 @@ export class StdioTransportHandler {
   }
 
   async stop(): Promise<void> {
+    // Clean up containers first
+    if (this.cleanup) {
+      try {
+        await this.cleanup();
+      } catch (error) {
+        console.error('Cleanup error:', error);
+      }
+    }
+
+    // Close transport
     if (this.transport) {
       await this.transport.close();
       this.transport = null;
