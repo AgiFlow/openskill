@@ -23,5 +23,19 @@
       "!{projectRoot}/eslint.config.js"
     ],
     "sharedGlobals": []
+  },
+  "release": {
+    "projects": ["packages/*"],
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github"
+      },
+      "projectChangelog": {
+        "createRelease": "github"
+      }
+    },
+    "version": {
+      "conventionalCommits": true
+    }
   }
 }
