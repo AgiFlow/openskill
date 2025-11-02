@@ -25,10 +25,10 @@ export interface UseSkillToolInput {
 
 export interface UseSkillToolOptions {
   timeout?: number;
-  workdir?: string;
   mountPath?: string;
   containerName?: string;
   imageName?: string;
+  technologies?: string;
 }
 
 export class UseSkillTool implements Tool<UseSkillToolInput> {
@@ -37,25 +37,28 @@ export class UseSkillTool implements Tool<UseSkillToolInput> {
   private sandboxService: SandboxService;
   private timeout: number;
   private workdir: string;
-  private mountPath?: string;
+  private mountPath: string;
   private containerName?: string;
   private imageName?: string;
+  private technologies: string;
 
   constructor(options: UseSkillToolOptions = {}) {
     this.timeout = options.timeout ?? 30000;
-    this.workdir = options.workdir ?? '/workspace';
-    this.mountPath = options.mountPath;
+    // Use process.cwd() as both workdir and mountPath to avoid path confusion
+    // The host directory is mounted to the same path in the container
+    const cwd = process.cwd();
+    this.mountPath = options.mountPath ?? cwd;
+    this.workdir = this.mountPath;
     this.containerName = options.containerName;
     this.imageName = options.imageName;
+    this.technologies = options.technologies ?? 'Debian (node:20-slim base), Node.js 20, Python 3, bash, git, curl, wget, npm, pip3, uv, pipenv, poetry, Pillow, build-essential, apt';
     this.sandboxService = new SandboxService(this.mountPath, this.containerName, this.imageName);
   }
 
   getDefinition(): ToolDefinition {
     return {
       name: UseSkillTool.TOOL_NAME,
-      description: `You must execute a skill in a sandboxed Docker environment with bash command execution for safety.
-Please use relative path to Working Directory, the container mount uses working directory /workspace.
-- Working Directory: ${this.workdir}${this.mountPath ? `\n- Host Mount: ${this.mountPath} -> ${this.workdir}` : ''}
+      description: `You must execute a skill in a sandboxed Docker environment with bash command execution for safety. This environment support ${this.technologies} by default.
 PS: If the script is large, you write a script first to a file and MUST execute it with use-skill tool command to improve safety.`,
       inputSchema: {
         type: 'object',

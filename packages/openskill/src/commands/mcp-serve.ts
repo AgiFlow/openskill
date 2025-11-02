@@ -57,13 +57,13 @@ export const mcpServeCommand = new Command('mcp-serve')
     '30000'
   )
   .option(
-    '--workdir <workdir>',
-    'Default working directory for use-skill command',
-    '/workspace'
+    '--mount <path>',
+    'Host path to mount into container (enables file access from host)'
   )
   .option(
-    '--mount <path>',
-    'Host path to mount into container /workspace (enables file access from host)'
+    '--technologies <technologies>',
+    'Comma-separated list of technologies available in the container (e.g., "Ubuntu 22.04, Node.js 20, Python 3.11")',
+    'Debian (node:20-slim base), Node.js 20, Python 3, bash, git, curl, wget, npm, pip3, uv, pipenv, poetry, Pillow, build-essential, apt'
   )
   .option(
     '--disable-tools <tools>',
@@ -90,8 +90,8 @@ export const mcpServeCommand = new Command('mcp-serve')
     try {
       const transportType = options.type.toLowerCase();
       const timeout = parseInt(options.timeout, 10);
-      const workdir = options.workdir;
       const mountPath = options.mount;
+      const technologies = options.technologies;
       const skillsPath = options.skillsPath;
       const containerName = options.containerName;
       const imageName = options.image;
@@ -103,10 +103,10 @@ export const mcpServeCommand = new Command('mcp-serve')
       if (transportType === 'stdio') {
         const { server, cleanup } = createServer({
           useSkillTimeout: timeout,
-          useSkillWorkdir: workdir,
           useSkillMountPath: mountPath,
           useSkillContainerName: containerName,
           useSkillImageName: imageName,
+          useSkillTechnologies: technologies,
           disabledTools,
           skillsPath,
           prewarmDocker: prewarm,

@@ -287,9 +287,9 @@ export class SandboxService {
         let dockerRunCmd = `docker run -d --name ${containerName} -p ${hostPort}:${this.containerPort}`;
 
         if (this.mountPath) {
-          // Mount host path to /workspace in container
-          dockerRunCmd += ` -v "${this.mountPath}:/workspace"`;
-          console.error(`Mounting ${this.mountPath} to /workspace`);
+          // Mount host path to the same path in container to avoid confusion
+          dockerRunCmd += ` -v "${this.mountPath}:${this.mountPath}"`;
+          console.error(`Mounting ${this.mountPath} to ${this.mountPath}`);
         }
 
         dockerRunCmd += ` ${this.imageName}`;
@@ -359,7 +359,7 @@ export class SandboxService {
           body: JSON.stringify({
             command: options.command,
             timeout: options.timeout || 30000,
-            cwd: options.workdir || '/workspace',
+            cwd: options.workdir || this.mountPath,
           }),
         }
       );

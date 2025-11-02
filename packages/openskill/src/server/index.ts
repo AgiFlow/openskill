@@ -25,10 +25,10 @@ import { SandboxService } from '../services/SandboxService.js';
 
 export interface ServerOptions {
   useSkillTimeout?: number;
-  useSkillWorkdir?: string;
   useSkillMountPath?: string;
   useSkillContainerName?: string;
   useSkillImageName?: string;
+  useSkillTechnologies?: string;
   disabledTools?: string[];
   skillsPath?: string;
   prewarmDocker?: boolean;
@@ -61,10 +61,10 @@ export function createServer(options: ServerOptions = {}): ServerInstance {
   });
   const useSkillToolOptions: UseSkillToolOptions = {
     timeout: options.useSkillTimeout,
-    workdir: options.useSkillWorkdir,
     mountPath: options.useSkillMountPath,
     containerName: options.useSkillContainerName,
     imageName: options.useSkillImageName,
+    technologies: options.useSkillTechnologies,
   };
   const useSkillTool = new UseSkillTool(useSkillToolOptions);
 
